@@ -4,7 +4,7 @@ plugins {
     id 'java'
 }
 
-group = 'msa.lime1st.composite'
+group = 'msa.lime1st.microservices.composite'
 version = '1.0.0'
 
 java {

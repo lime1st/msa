@@ -2,6 +2,8 @@ package msa.lime1st.util.http;
 
 import msa.lime1st.api.exception.InvalidInputException;
 import msa.lime1st.api.exception.NotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -11,6 +13,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalControllerException {
+
+    private static final Logger LOG = LoggerFactory.getLogger(GlobalControllerException.class);
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler(NotFoundException.class)
@@ -47,7 +51,7 @@ public class GlobalControllerException {
             .value();
         final String message = ex.getMessage();
 
-//        log.debug("Returning HTTP status: {} for path: {}, message: {}", httpStatus, path, message);
+        LOG.debug("Returning HTTP status: {} for path: {}, message: {}", httpStatus, path, message);
         return HttpErrorInfo.of(
             httpStatus,
             path,

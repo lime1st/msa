@@ -4,7 +4,7 @@ plugins {
     id 'java'
 }
 
-group = 'msa.lime1st.review'
+group = 'msa.lime1st.microservices.review'
 version = '1.0.0'
 
 java {
