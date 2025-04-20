@@ -7,3 +7,12 @@ logging:
   level:
     root: info
     msa.lime1st: debug
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+server:
+  port: 8080

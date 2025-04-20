@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  product:
+    image: product
+    container_name: product
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  recommendation:
+    image: recommendation
+    container_name: recommendation
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  review:
+    image: review
+    container_name: review
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  composite:
+    image: composite
+    container_name: composite
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
