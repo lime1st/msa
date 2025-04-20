@@ -1,18 +1,18 @@
 server:
-  port: 7000
+  port: 8000
   error:
     include-message: always
 
 app:
   product:
     host: localhost
-    port: 7001
+    port: 8001
   recommendation:
     host: localhost
-    port: 7002
+    port: 8002
   review:
     host: localhost
-    port: 7003
+    port: 8003
 
 logging:
   level:

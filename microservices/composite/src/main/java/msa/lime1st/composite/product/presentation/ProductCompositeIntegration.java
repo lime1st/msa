@@ -1,9 +1,5 @@
 package msa.lime1st.composite.product.presentation;
 
-import static org.springframework.http.HttpMethod.GET;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
-import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,6 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
@@ -71,9 +69,9 @@ public class ProductCompositeIntegration implements ProductApi, RecommendationAp
         } catch (HttpClientErrorException ex) {
 
             HttpStatusCode statusCode = ex.getStatusCode();
-            if (statusCode.equals(NOT_FOUND)) {
+            if (statusCode.equals(HttpStatus.NOT_FOUND)) {
                 throw new NotFoundException(getErrorMessage(ex));
-            } else if (statusCode.equals(UNPROCESSABLE_ENTITY)) {
+            } else if (statusCode.equals(HttpStatus.UNPROCESSABLE_ENTITY)) {
                 throw new InvalidInputException(getErrorMessage(ex));
             }
             LOG.warn("Got an unexpected HTTP error: {}, will rethrow it", ex.getStatusCode());
@@ -89,7 +87,7 @@ public class ProductCompositeIntegration implements ProductApi, RecommendationAp
 
             LOG.debug("Will call getRecommendations API on URL: {}", url);
             List<RecommendationResponse> recommendations = restTemplate
-                .exchange(url, GET, null,
+                .exchange(url, HttpMethod.GET, null,
                     new ParameterizedTypeReference<List<RecommendationResponse>>() {})
                 .getBody();
 
@@ -110,7 +108,7 @@ public class ProductCompositeIntegration implements ProductApi, RecommendationAp
 
             LOG.debug("Will call getReviews API on URL: {}", url);
             List<ReviewResponse> reviews = restTemplate
-                .exchange(url, GET, null,
+                .exchange(url, HttpMethod.GET, null,
                     new ParameterizedTypeReference<List<ReviewResponse>>() {})
                 .getBody();
 
