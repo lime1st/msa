@@ -1,5 +1,6 @@
 package msa.lime1st.util.http;
 
+import msa.lime1st.api.exception.BadRequestException;
 import msa.lime1st.api.exception.InvalidInputException;
 import msa.lime1st.api.exception.NotFoundException;
 import org.slf4j.Logger;
@@ -16,19 +17,36 @@ public class GlobalControllerException {
 
     private static final Logger LOG = LoggerFactory.getLogger(GlobalControllerException.class);
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(BadRequestException.class)
+    public HttpErrorInfo handleBadRequestException(
+        ServerHttpRequest request,
+        BadRequestException ex
+    ) {
+        return createHttpErrorInfo(
+            HttpStatus.BAD_REQUEST,
+            request,
+            ex
+        );
+    }
+
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler(NotFoundException.class)
-    public @ResponseBody HttpErrorInfo handleNotFoundExceptions(
+    public HttpErrorInfo handleNotFoundExceptions(
         ServerHttpRequest request,
         NotFoundException ex
     ) {
 
-        return createHttpErrorInfo(HttpStatus.NOT_FOUND, request, ex);
+        return createHttpErrorInfo(
+            HttpStatus.NOT_FOUND,
+            request,
+            ex
+        );
     }
 
     @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
     @ExceptionHandler(InvalidInputException.class)
-    public @ResponseBody HttpErrorInfo handleInvalidInputException(
+    public HttpErrorInfo handleInvalidInputException(
         ServerHttpRequest request,
         InvalidInputException ex
     ) {
