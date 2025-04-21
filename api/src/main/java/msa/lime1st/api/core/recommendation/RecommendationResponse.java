@@ -9,7 +9,7 @@ public record RecommendationResponse (
     String serviceAddress
 ) {
 
-    public static RecommendationResponse of(
+    public static RecommendationResponse of (
         int productId,
         int recommendationId,
         String author,
@@ -23,6 +23,17 @@ public record RecommendationResponse (
             author,
             rate,
             content,
+            serviceAddress
+        );
+    }
+
+    public RecommendationResponse withServiceAddress (String serviceAddress) {
+        return new RecommendationResponse(
+            this.productId,
+            this.recommendationId,
+            this.author,
+            this.rate,
+            this.content,
             serviceAddress
         );
     }

@@ -26,4 +26,15 @@ public record ReviewResponse(
             serviceAddress
         );
     }
+
+    public ReviewResponse withServiceAddress(String serviceAddress) {
+        return new ReviewResponse(
+            this.productId,
+            this.reviewId,
+            this.author,
+            this.subject,
+            this.content,
+            serviceAddress
+        );
+    }
 }

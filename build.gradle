@@ -42,3 +42,13 @@ subprojects {
         }
     }
 }
+
+// 컨테이너 이미지 빌드 동시 실행
+tasks.register("buildAllImages") {
+    group = "build"
+    description = "Build bootBuildImage for all Spring Boot subprojects"
+
+    dependsOn subprojects
+            .findAll { it.plugins.hasPlugin("org.springframework.boot") }
+            .collect { it.tasks.named("bootBuildImage") }
+}

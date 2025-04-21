@@ -20,4 +20,13 @@ public record ProductResponse(
             serviceAddress
         );
     }
+
+    public ProductResponse withServiceAddress (String serviceAddress) {
+        return new ProductResponse(
+            this.productId,
+            this.name,
+            this.weight,
+            serviceAddress
+        );
+    }
 }

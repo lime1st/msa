@@ -1,23 +1,59 @@
 version: '3.8'
 
 services:
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    command: mongod
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping').ok" ]
+      interval: 5s
+      timeout: 2s
+      retries: 60
+
+  mysql:
+    image: mysql:latest
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=review-db
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+    healthcheck:
+      test: [ "CMD", "mysql", "-uuser", "-ppassword", "-e", "SHOW DATABASES;" ]
+      interval: 5s
+      timeout: 2s
+      retries: 60
+
   product:
     image: product
     container_name: product
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      mongodb:
+        condition: service_healthy
 
   recommendation:
     image: recommendation
     container_name: recommendation
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      mongodb:
+        condition: service_healthy
 
   review:
     image: review
     container_name: review
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      mysql:
+        condition: service_healthy
 
   composite:
     image: composite
