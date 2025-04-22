@@ -2,8 +2,11 @@ package msa.lime1st.recommendation.infrastructure.persistence;
 
 import java.util.List;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import reactor.core.publisher.Flux;
 
-public interface RecommendationRepository extends CrudRepository<RecommendationDocument, String> {
+public interface RecommendationRepository extends
+    ReactiveCrudRepository<RecommendationDocument, String> {
 
-    List<RecommendationDocument> findByProductId(int productId);
+    Flux<RecommendationDocument> findByProductId(int productId);
 }

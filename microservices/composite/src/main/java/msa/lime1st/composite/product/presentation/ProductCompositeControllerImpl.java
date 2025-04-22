@@ -1,6 +1,9 @@
 package msa.lime1st.composite.product.presentation;
 
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import msa.lime1st.api.composite.product.ProductAggregateRequest;
 import msa.lime1st.api.composite.product.ProductAggregateResponse;
@@ -14,11 +17,11 @@ import msa.lime1st.api.core.recommendation.RecommendationRequest;
 import msa.lime1st.api.core.recommendation.RecommendationResponse;
 import msa.lime1st.api.core.review.ReviewRequest;
 import msa.lime1st.api.core.review.ReviewResponse;
-import msa.lime1st.api.exception.NotFoundException;
 import msa.lime1st.util.http.ApiUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 @RestController
 public class ProductCompositeControllerImpl implements ProductCompositeApi {
@@ -37,11 +40,15 @@ public class ProductCompositeControllerImpl implements ProductCompositeApi {
     }
 
     @Override
-    public void createProduct(ProductAggregateRequest aggregateRequest) {
+    public Mono<Void> createProduct(ProductAggregateRequest aggregateRequest) {
+        LOG.info("1. Creating product aggregate: {}", aggregateRequest);
 
         try {
 
-            LOG.debug("createCompositeProduct: creates a new composite entity for productId: {}", aggregateRequest.productId());
+            List<Mono> monoList = new ArrayList<>();
+
+            LOG.debug("2. createCompositeProduct: creates a new composite entity for productId: {}",
+                aggregateRequest.productId());
 
             ProductRequest productRequest = ProductRequest.of(
                 aggregateRequest.productId(),
@@ -49,7 +56,7 @@ public class ProductCompositeControllerImpl implements ProductCompositeApi {
                 aggregateRequest.weight(),
                 null
             );
-            integration.postProduct(productRequest);
+            monoList.add(integration.postProduct(productRequest));
 
             if (aggregateRequest.recommendations() != null) {
                 aggregateRequest.recommendations().forEach(rs -> {
@@ -78,7 +85,12 @@ public class ProductCompositeControllerImpl implements ProductCompositeApi {
                 });
             }
 
-            LOG.debug("createCompositeProduct: composite entities created for productId: {}", aggregateRequest.productId());
+            LOG.debug("createCompositeProduct: composite entities created for productId: {}",
+                aggregateRequest.productId());
+
+            return Mono.zip(r -> "", monoList.toArray(new Mono[0]))
+                .doOnError(ex -> LOG.warn("createCompositeProduct failed: {}", ex.toString()))
+                .then();
 
         } catch (RuntimeException re) {
             LOG.warn("createCompositeProduct failed", re);
@@ -87,36 +99,42 @@ public class ProductCompositeControllerImpl implements ProductCompositeApi {
     }
 
     @Override
-    public ProductAggregateResponse getProduct(int productId) {
-        ProductResponse response = integration.getProduct(productId);
-        if (response == null) {
-            throw new NotFoundException("No response found for productId: " + productId);
-        }
-
-        List<RecommendationResponse> recommendations = integration.getRecommendations(productId);
-
-        List<ReviewResponse> reviews = integration.getReviews(productId);
-
-        return createProductAggregateResponse(
-            response,
-            recommendations,
-            reviews,
-            apiUtil.getServiceAddress()
-        );
+    public Mono<ProductAggregateResponse> getProduct(int productId) {
+        LOG.info("Will get composite product info for product.id = {}", productId);
+        return Mono.zip(
+                values -> createProductAggregateResponse(
+                    (ProductResponse) values[0],
+                    (List<RecommendationResponse>) values[1],
+                    (List<ReviewResponse>) values[2],
+                    apiUtil.getServiceAddress()
+                ),
+                integration.getProduct(productId),
+                integration.getRecommendations(productId).collectList(),
+                integration.getReviews(productId).collectList())
+            .doOnError(ex -> LOG.warn("getCompositeProduct failed: {}", ex.toString()))
+            .log(LOG.getName(), Level.FINE);
     }
 
     @Override
-    public void deleteProduct(int productId) {
+    public Mono<Void> deleteProduct(int productId) {
 
-        LOG.debug("deleteCompositeProduct: Deletes a product aggregate for productId: {}", productId);
+        try {
+            LOG.debug("deleteCompositeProduct: Deletes a product aggregate for productId: {}",
+                productId);
 
-        integration.deleteProduct(productId);
-
-        integration.deleteRecommendations(productId);
-
-        integration.deleteReviews(productId);
-
-        LOG.debug("deleteCompositeProduct: aggregate entities deleted for productId: {}", productId);
+            return Mono.zip(
+                    r -> "",
+                    integration.deleteProduct(productId),
+                    integration.deleteRecommendations(productId),
+                    integration.deleteReviews(productId)
+                )
+                .doOnError(ex -> LOG.warn("delete failed: {}", ex.toString()))
+                .log(LOG.getName(), Level.FINE)
+                .then();
+        } catch (RuntimeException re) {
+            LOG.warn("deleteCompositeProduct failed", re);
+            throw re;
+        }
     }
 
     private ProductAggregateResponse createProductAggregateResponse(
@@ -134,7 +152,7 @@ public class ProductCompositeControllerImpl implements ProductCompositeApi {
         // 2. Copy summary recommendation info, if available
         List<RecommendationSummary> recommendationSummaries =
             (recommendations == null) ? null : recommendations.stream()
-                .map(r -> new RecommendationSummary(
+                .map(r -> RecommendationSummary.of(
                     r.recommendationId(),
                     r.author(),
                     r.rate(),
@@ -144,7 +162,7 @@ public class ProductCompositeControllerImpl implements ProductCompositeApi {
         // 3. Copy summary review info, if available
         List<ReviewSummary> reviewSummaries =
             (reviews == null) ? null : reviews.stream()
-                .map(r -> new ReviewSummary(
+                .map(r -> ReviewSummary.of(
                     r.reviewId(),
                     r.author(),
                     r.subject(),
@@ -157,14 +175,14 @@ public class ProductCompositeControllerImpl implements ProductCompositeApi {
             reviews.get(0).serviceAddress() : "";
         String recommendationAddress = (recommendations != null && !recommendations.isEmpty()) ?
             recommendations.get(0).serviceAddress() : "";
-        ServiceAddresses serviceAddresses = new ServiceAddresses(
+        ServiceAddresses serviceAddresses = ServiceAddresses.of(
             serviceAddress,
             productAddress,
             reviewAddress,
             recommendationAddress
         );
 
-        return new ProductAggregateResponse(
+        return ProductAggregateResponse.of(
             productId,
             name,
             weight,

@@ -1,12 +1,9 @@
 package msa.lime1st.product.infrastructure.persistence;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Supplier;
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import reactor.core.publisher.Mono;
 
-public interface ProductRepository extends MongoRepository<ProductDocument, String> {
+public interface ProductRepository extends ReactiveCrudRepository<ProductDocument, String> {
 
-    Optional<ProductDocument> findByProductId(int productId);
+    Mono<ProductDocument> findByProductId(int productId);
 }

@@ -26,4 +26,15 @@ public record RecommendationRequest(
             serviceAddress
         );
     }
+
+    public RecommendationResponse toResponse() {
+        return RecommendationResponse.of(
+            productId,
+            recommendationId,
+            author,
+            rate,
+            content,
+            serviceAddress
+        );
+    }
 }

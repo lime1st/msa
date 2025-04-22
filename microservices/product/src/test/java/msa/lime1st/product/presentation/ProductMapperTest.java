@@ -1,6 +1,8 @@
 package msa.lime1st.product.presentation;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import msa.lime1st.api.core.product.ProductRequest;
 import msa.lime1st.api.core.product.ProductResponse;
@@ -10,7 +12,7 @@ import org.mapstruct.factory.Mappers;
 
 class ProductMapperTest {
 
-    private ProductMapper mapper = Mappers.getMapper(ProductMapper.class);
+    private final ProductMapper mapper = Mappers.getMapper(ProductMapper.class);
 
     @Test
     void mapperTests() {

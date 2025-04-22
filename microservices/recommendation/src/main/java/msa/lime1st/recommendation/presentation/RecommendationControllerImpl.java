@@ -1,17 +1,18 @@
 package msa.lime1st.recommendation.presentation;
 
-import java.util.List;
+import java.util.logging.Level;
 import msa.lime1st.api.core.recommendation.RecommendationApi;
 import msa.lime1st.api.core.recommendation.RecommendationRequest;
 import msa.lime1st.api.core.recommendation.RecommendationResponse;
 import msa.lime1st.api.exception.InvalidInputException;
-import msa.lime1st.recommendation.infrastructure.persistence.RecommendationDocument;
 import msa.lime1st.recommendation.infrastructure.persistence.RecommendationRepository;
 import msa.lime1st.util.http.ApiUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @RestController
 public class RecommendationControllerImpl implements RecommendationApi {
@@ -30,41 +31,48 @@ public class RecommendationControllerImpl implements RecommendationApi {
     }
 
     @Override
-    public RecommendationResponse postRecommendation(RecommendationRequest request) {
-        try {
-            RecommendationDocument document = mapper.requestToDocument(request);
-            RecommendationDocument saveDocument = repository.save(document);
+    public Mono<RecommendationResponse> postRecommendation(RecommendationRequest request) {
 
-            LOG.info("Saved recommendation: {}", document);
-            return mapper.documentToResponse(saveDocument);
-        } catch (DuplicateKeyException dke) {
-            throw new InvalidInputException("Duplicate key, Product Id: " + request.productId() +
-                ", Recommendation Id: " + request.recommendationId());
+        if (request.productId() < 1) {
+            throw new InvalidInputException("Invalid productId: " + request.productId());
         }
+
+        return repository.save(mapper.requestToDocument(request))
+            .log(LOG.getName(), Level.FINE)
+            .onErrorMap(
+                DuplicateKeyException.class,
+                ex -> new InvalidInputException(
+                    "Duplicate key, Product Id: " + request.productId() +
+                        ", Recommendation Id: " + request.recommendationId()))
+            .map(mapper::documentToResponse);
     }
 
     @Override
-    public List<RecommendationResponse> getRecommendations(int productId) {
+    public Flux<RecommendationResponse> getRecommendations(int productId) {
 
         if (productId < 1) {
             throw new InvalidInputException("Invalid productId: " + productId);
         }
 
-        List<RecommendationDocument> documentList = repository.findByProductId(productId);
-        List<RecommendationResponse> responseList = mapper.documentListToResponseList(documentList);
+        LOG.info("Will get recommendations for product with id={}", productId);
 
-        List<RecommendationResponse> list = responseList.stream()
-            .map(r -> r.withServiceAddress(apiUtil.getServiceAddress()))
-            .toList();
-
-        LOG.debug("/get recommendation response size: {}", list.size());
-
-        return list;
+        return repository.findByProductId(productId)
+            .log(LOG.getName(), Level.FINE)
+            .map(mapper::documentToResponse)
+            .map(response ->
+                response.withServiceAddress(apiUtil.getServiceAddress()));
     }
 
     @Override
-    public void deleteRecommendations(int productId) {
-        LOG.debug("/delete recommendations: tries to delete recommendations for the product with productId {}", productId);
-        repository.deleteAll(repository.findByProductId(productId));
+    public Mono<Void> deleteRecommendations(int productId) {
+
+        if (productId < 1) {
+            throw new InvalidInputException("Invalid productId: " + productId);
+        }
+
+        LOG.debug(
+            "deleteRecommendations: tries to delete recommendations for the product with productId: {}",
+            productId);
+        return repository.deleteAll(repository.findByProductId(productId));
     }
 }

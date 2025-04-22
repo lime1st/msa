@@ -3,7 +3,7 @@ package msa.lime1st.recommendation.infrastructure.persistence;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
@@ -24,12 +24,14 @@ class RecommendationRepositoryTest extends MongoDbTestBase {
 
     @BeforeEach
     void setupDb() {
-        repository.deleteAll();
+        repository.deleteAll().block();
 
         RecommendationDocument document = RecommendationDocument.create(
             1, 2, "a", 3, "c");
-        savedDocument = repository.save(document);
+        savedDocument = repository.save(document)
+            .block();
 
+        assert savedDocument != null;
         assertEqualsRecommendation(document, savedDocument);
     }
 
@@ -38,33 +40,43 @@ class RecommendationRepositoryTest extends MongoDbTestBase {
 
         RecommendationDocument document = RecommendationDocument.create(
             1, 3, "a", 3, "c");
-        repository.save(document);
+        repository.save(document)
+            .block();
 
-        RecommendationDocument foundDocument = repository.findById(document.getId()).get();
+        RecommendationDocument foundDocument = repository.findById(document.getId())
+            .block();
+        assert foundDocument != null;
         assertEqualsRecommendation(document, foundDocument);
 
-        assertEquals(2, repository.count());
+        assertEquals(2, repository.count()
+            .block());
     }
 
     @Test
     void update() {
         savedDocument.setAuthor("a2");
-        repository.save(savedDocument);
+        repository.save(savedDocument)
+            .block();
 
-        RecommendationDocument foundDocument = repository.findById(savedDocument.getId()).get();
-        assertEquals(1, (long)foundDocument.getVersion());
+        RecommendationDocument foundDocument = repository.findById(savedDocument.getId())
+            .block();
+        assert foundDocument != null;
+        assertEquals(1, foundDocument.getVersion());
         assertEquals("a2", foundDocument.getAuthor());
     }
 
     @Test
     void delete() {
-        repository.delete(savedDocument);
-        assertFalse(repository.existsById(savedDocument.getId()));
+        repository.delete(savedDocument).block();
+        assertNotEquals(Boolean.TRUE, repository.existsById(savedDocument.getId())
+            .block());
     }
 
     @Test
     void getByProductId() {
-        List<RecommendationDocument> documentList = repository.findByProductId(savedDocument.getProductId());
+        List<RecommendationDocument> documentList = repository.findByProductId(savedDocument.getProductId())
+            .collectList()
+            .block();
 
         assertThat(documentList, hasSize(1));
         assertEqualsRecommendation(savedDocument, documentList.get(0));
@@ -75,7 +87,8 @@ class RecommendationRepositoryTest extends MongoDbTestBase {
         assertThrows(DuplicateKeyException.class, () -> {
             RecommendationDocument document = RecommendationDocument.create(
                 1, 2, "a", 3, "c");
-            repository.save(document);
+            repository.save(document)
+                .block();
         });
     }
 
@@ -83,23 +96,29 @@ class RecommendationRepositoryTest extends MongoDbTestBase {
     void optimisticLockError() {
 
         // Store the saved document in two separate document objects
-        RecommendationDocument document1 = repository.findById(savedDocument.getId()).get();
-        RecommendationDocument document2 = repository.findById(savedDocument.getId()).get();
+        RecommendationDocument document1 = repository.findById(savedDocument.getId())
+            .block();
+        RecommendationDocument document2 = repository.findById(savedDocument.getId())
+            .block();
 
         // Update the document using the first document object
+        assert document1 != null;
         document1.setAuthor("a1");
-        repository.save(document1);
+        repository.save(document1).block();
 
         //  Update the document using the second document object.
         // This should fail since the second document now holds an old version number, i.e. an Optimistic Lock Error
         assertThrows(OptimisticLockingFailureException.class, () -> {
+            assert document2 != null;
             document2.setAuthor("a2");
-            repository.save(document2);
+            repository.save(document2).block();
         });
 
         // Get the updated document from the database and verify its new update
-        RecommendationDocument updatedDocument = repository.findById(savedDocument.getId()).get();
-        assertEquals(1, (int)updatedDocument.getVersion());
+        RecommendationDocument updatedDocument = repository.findById(savedDocument.getId())
+            .block();
+        assert updatedDocument != null;
+        assertEquals(1, (int) updatedDocument.getVersion());
         assertEquals("a1", updatedDocument.getAuthor());
     }
 

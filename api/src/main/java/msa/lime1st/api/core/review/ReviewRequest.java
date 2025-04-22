@@ -26,4 +26,15 @@ public record ReviewRequest(
             serviceAddress
         );
     }
+
+    public ReviewResponse toResponse() {
+        return ReviewResponse.of(
+            productId,
+            reviewId,
+            author,
+            subject,
+            content,
+            serviceAddress
+        );
+    }
 }

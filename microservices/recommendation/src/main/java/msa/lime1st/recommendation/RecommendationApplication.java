@@ -32,19 +32,4 @@ public class RecommendationApplication {
         String mongoDbPort = ctx.getEnvironment().getProperty("spring.data.mongodb.port");
         LOG.info("Connected to MongoDb: {}/{}", mongoDbHost, mongoDbPort);
     }
-
-    @Autowired
-    MongoOperations mongoTemplate;
-
-    @EventListener(ContextRefreshedEvent.class)
-    public void initIndicesAfterStartup() {
-
-        MappingContext<? extends MongoPersistentEntity<?>, MongoPersistentProperty> mappingContext =
-            mongoTemplate.getConverter().getMappingContext();
-        IndexResolver resolver = new MongoPersistentEntityIndexResolver(mappingContext);
-
-        IndexOperations indexOps = mongoTemplate.indexOps(RecommendationDocument.class);
-        resolver.resolveIndexFor(RecommendationDocument.class)
-            .forEach(indexOps::ensureIndex);
-    }
 }

@@ -1,8 +1,13 @@
 package msa.lime1st.recommendation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.function.Consumer;
 import msa.lime1st.api.core.recommendation.RecommendationRequest;
+import msa.lime1st.api.event.Event;
+import msa.lime1st.api.event.Event.Type;
+import msa.lime1st.api.exception.InvalidInputException;
 import msa.lime1st.recommendation.infrastructure.persistence.MongoDbTestBase;
 import msa.lime1st.recommendation.infrastructure.persistence.RecommendationRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,7 +17,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import reactor.core.publisher.Mono;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class RecommendationApplicationTests extends MongoDbTestBase {
@@ -23,9 +27,12 @@ class RecommendationApplicationTests extends MongoDbTestBase {
     @Autowired
     private RecommendationRepository repository;
 
+    @Autowired
+    private Consumer<Event<Integer, RecommendationRequest>> messageProcessor;
+
     @BeforeEach
     void setupDb() {
-        repository.deleteAll();
+        repository.deleteAll().block();
     }
 
     @Test
@@ -37,11 +44,11 @@ class RecommendationApplicationTests extends MongoDbTestBase {
 
         int productId = 1;
 
-        postAndVerifyRecommendation(productId, 1, HttpStatus.OK);
-        postAndVerifyRecommendation(productId, 2, HttpStatus.OK);
-        postAndVerifyRecommendation(productId, 3, HttpStatus.OK);
+        sendCreateRecommendationEvent(productId, 1);
+        sendCreateRecommendationEvent(productId, 2);
+        sendCreateRecommendationEvent(productId, 3);
 
-        assertEquals(3, repository.findByProductId(productId).size());
+        assertEquals(3, repository.findByProductId(productId).count().block());
 
         getAndVerifyRecommendationsByProductId(productId)
             .jsonPath("$.length()").isEqualTo(3)
@@ -55,17 +62,17 @@ class RecommendationApplicationTests extends MongoDbTestBase {
         int productId = 1;
         int recommendationId = 1;
 
-        postAndVerifyRecommendation(productId, recommendationId, HttpStatus.OK)
-            .jsonPath("$.productId").isEqualTo(productId)
-            .jsonPath("$.recommendationId").isEqualTo(recommendationId);
+        sendCreateRecommendationEvent(productId, recommendationId);
 
-        assertEquals(1, repository.count());
+        assertEquals(1, repository.count().block());
 
-        postAndVerifyRecommendation(productId, recommendationId, HttpStatus.UNPROCESSABLE_ENTITY)
-            .jsonPath("$.path").isEqualTo("/recommendation")
-            .jsonPath("$.message").isEqualTo("Duplicate key, Product Id: 1, Recommendation Id: 1");
+        InvalidInputException thrown = assertThrows(
+            InvalidInputException.class,
+            () -> sendCreateRecommendationEvent(productId, recommendationId),
+            "Expected a InvalidInputException here!");
+        assertEquals("Duplicate key, Product Id: 1, Recommendation Id: 1", thrown.getMessage());
 
-        assertEquals(1, repository.count());
+        assertEquals(1, repository.count().block());
     }
 
     @Test
@@ -74,13 +81,13 @@ class RecommendationApplicationTests extends MongoDbTestBase {
         int productId = 1;
         int recommendationId = 1;
 
-        postAndVerifyRecommendation(productId, recommendationId, HttpStatus.OK);
-        assertEquals(1, repository.findByProductId(productId).size());
+        sendCreateRecommendationEvent(productId, recommendationId);;
+        assertEquals(1, repository.findByProductId(productId).count().block());
 
-        deleteAndVerifyRecommendationsByProductId(productId);
-        assertEquals(0, repository.findByProductId(productId).size());
+        sendDeleteRecommendationEvent(productId);
+        assertEquals(0, repository.findByProductId(productId).count().block());
 
-        deleteAndVerifyRecommendationsByProductId(productId);
+        sendDeleteRecommendationEvent(productId);
     }
 
     @Test
@@ -130,12 +137,8 @@ class RecommendationApplicationTests extends MongoDbTestBase {
             .expectBody();
     }
 
-    private WebTestClient.BodyContentSpec postAndVerifyRecommendation(
-        int productId,
-        int recommendationId,
-        HttpStatus expectedStatus
-    ) {
-        RecommendationRequest recommendation = RecommendationRequest.of(
+    private void sendCreateRecommendationEvent(int productId, int recommendationId) {
+        RecommendationRequest request = RecommendationRequest.of(
             productId,
             recommendationId,
             "Author " + recommendationId,
@@ -143,22 +146,20 @@ class RecommendationApplicationTests extends MongoDbTestBase {
             "Content " + recommendationId,
             "SA"
         );
-        return client.post()
-            .uri("/recommendation")
-            .body(Mono.just(recommendation), RecommendationRequest.class)
-            .accept(MediaType.APPLICATION_JSON)
-            .exchange()
-            .expectStatus().isEqualTo(expectedStatus)
-            .expectHeader().contentType(MediaType.APPLICATION_JSON)
-            .expectBody();
+        Event<Integer, RecommendationRequest> event = Event.create(
+            Type.CREATE,
+            productId,
+            request
+        );
+        messageProcessor.accept(event);
     }
 
-    private void deleteAndVerifyRecommendationsByProductId(int productId) {
-        client.delete()
-            .uri("/recommendation?productId=" + productId)
-            .accept(MediaType.APPLICATION_JSON)
-            .exchange()
-            .expectStatus().isEqualTo(HttpStatus.OK)
-            .expectBody();
+    private void sendDeleteRecommendationEvent(int productId) {
+        Event<Integer, RecommendationRequest> event = Event.create(
+            Type.DELETE,
+            productId,
+            null
+        );
+        messageProcessor.accept(event);
     }
 }

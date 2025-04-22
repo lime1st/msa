@@ -14,6 +14,8 @@ public abstract class MongoDbTestBase {
 
     @DynamicPropertySource
     static void mongoProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.data.mongodb.uri", container::getReplicaSetUrl);
+        registry.add("spring.data.mongodb.host", container::getHost);
+        registry.add("spring.data.mongodb.port", container::getFirstMappedPort);
+        registry.add("spring.data.mongodb.database", ()->"test");
     }
 }

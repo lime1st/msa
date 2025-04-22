@@ -5,6 +5,8 @@ plugins {
 
 ext {
     springBootVersion = '3.4.4'
+    set('springCloudVersion', "2024.0.1")
+    mapstructVersion = "1.6.3"
 }
 
 subprojects {
@@ -26,6 +28,24 @@ subprojects {
 
     dependencies {
         implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
+
+        implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+        // mapstruct
+        implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+        compileOnly "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+        annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+        testAnnotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+
+        // test
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+        testImplementation 'io.projectreactor:reactor-test'
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        }
     }
 
     test {

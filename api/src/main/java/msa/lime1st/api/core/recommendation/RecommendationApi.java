@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public interface RecommendationApi {
 
@@ -20,7 +22,7 @@ public interface RecommendationApi {
      * @return A JSON representation of the newly created recommendation
      */
     @PostMapping("/recommendation")
-    RecommendationResponse postRecommendation(@RequestBody RecommendationRequest request);
+    Mono<RecommendationResponse> postRecommendation(@RequestBody RecommendationRequest request);
 
     /**
      * Sample usage: "curl $HOST:$PORT/recommendation?productId=1".
@@ -29,7 +31,7 @@ public interface RecommendationApi {
      * @return the recommendations of the product
      */
     @GetMapping("/recommendation")
-    List<RecommendationResponse> getRecommendations(@RequestParam("productId") int productId);
+    Flux<RecommendationResponse> getRecommendations(@RequestParam("productId") int productId);
 
     /**
      * Sample usage: "curl -X DELETE $HOST:$PORT/recommendation?productId=1".
@@ -37,5 +39,5 @@ public interface RecommendationApi {
      * @param productId id of the product
      */
     @DeleteMapping("/recommendation")
-    void deleteRecommendations(@RequestParam("productId") int productId);
+    Mono<Void> deleteRecommendations(@RequestParam("productId") int productId);
 }

@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public interface ReviewApi {
 
@@ -20,7 +22,7 @@ public interface ReviewApi {
      * @return A JSON representation of the newly created review
      */
     @PostMapping("/review")
-    ReviewResponse postReview(@RequestBody ReviewRequest request);
+    Mono<ReviewResponse> postReview(@RequestBody ReviewRequest request);
 
     /**
      * Sample usage: "curl $HOST:$PORT/review?productId=1".
@@ -29,7 +31,7 @@ public interface ReviewApi {
      * @return the reviews of the product
      */
     @GetMapping("/review")
-    List<ReviewResponse> getReviews(@RequestParam("productId") int productId);
+    Flux<ReviewResponse> getReviews(@RequestParam("productId") int productId);
 
     /**
      * Sample usage: "curl -X DELETE $HOST:$PORT/review?productId=1".
@@ -37,5 +39,5 @@ public interface ReviewApi {
      * @param productId id of the product
      */
     @DeleteMapping(value = "/review")
-    void deleteReviews(@RequestParam(value = "productId", required = true) int productId);
+    Mono<Void> deleteReviews(@RequestParam(value = "productId", required = true) int productId);
 }

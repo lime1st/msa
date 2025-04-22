@@ -20,4 +20,13 @@ public record ProductRequest(
             serviceAddress
         );
     }
+
+    public ProductResponse toResponse() {
+        return ProductResponse.of(
+            productId,
+            name,
+            weight,
+            serviceAddress
+        );
+    }
 }

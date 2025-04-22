@@ -1,5 +1,6 @@
 package msa.lime1st.product.presentation;
 
+import java.util.logging.Level;
 import msa.lime1st.api.core.product.ProductApi;
 import msa.lime1st.api.core.product.ProductRequest;
 import msa.lime1st.api.core.product.ProductResponse;
@@ -11,7 +12,9 @@ import msa.lime1st.util.http.ApiUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 @RestController
 public class ProductControllerImpl implements ProductApi {
@@ -33,42 +36,49 @@ public class ProductControllerImpl implements ProductApi {
     }
 
     @Override
-    public ProductResponse postProduct(ProductRequest request) {
-        try {
-            ProductDocument document = mapper.requestToDocument(request);
-            ProductDocument savedDocument = repository.save(document);
+    public Mono<ProductResponse> postProduct(ProductRequest request) {
 
-            LOG.info("create Product: document created for productId: {}",
-                savedDocument.getProductId());
-            return mapper.documentToResponse(savedDocument);
-        } catch (DuplicateKeyException dke) {
-            throw new InvalidInputException("Duplicate key, Product Id: " + request.productId());
+        if (request.productId() < 1) {
+            throw new InvalidInputException("Invalid productId: " + request.productId());
         }
+
+        return repository.save( mapper.requestToDocument(request))
+            .log(LOG.getName(), Level.FINE)
+            .onErrorMap(
+                DuplicateKeyException.class,
+                ex -> new InvalidInputException("Duplicate key, Product Id: " + request.productId()))
+            .map(mapper::documentToResponse);
     }
 
     @Override
-    public ProductResponse getProduct(int productId) {
+    public Mono<ProductResponse> getProduct(int productId) {
         LOG.debug("/product return the found product for productId={}", productId);
 
         if (productId < 1) {
             throw new InvalidInputException("Invalid productId: " + productId);
         }
 
-        ProductDocument document = repository.findByProductId(productId)
-            .orElseThrow(() -> new NotFoundException("No product found for productId: " + productId));
+        LOG.info("Will get product info for id = {}", productId);
 
-        ProductResponse response = mapper.documentToResponse(document)
-            .withServiceAddress(apiUtil.getServiceAddress());
-
-        LOG.debug("get product: found productId: {}", response.productId());
-
-        return response;
+        return repository.findByProductId(productId)
+            .switchIfEmpty(Mono.error(new NotFoundException("No product found for productId: " + productId)))
+            .log(LOG.getName(), Level.FINE)
+            .map(mapper::documentToResponse)
+            .map(response ->
+                response.withServiceAddress(apiUtil.getServiceAddress()));
     }
 
     @Override
-    public void deleteProduct(int productId) {
+    public Mono<Void> deleteProduct(int productId) {
+
+        if (productId < 1) {
+            throw new InvalidInputException("Invalid productId: " + productId);
+        }
+
         LOG.debug("delete product: tries to delete productId={}", productId);
-        repository.findByProductId(productId)
-            .ifPresent(repository::delete);
+        return repository.findByProductId(productId)
+            .log(LOG.getName(), Level.FINE)
+            .map(repository::delete)
+            .flatMap(e -> e);
     }
 }

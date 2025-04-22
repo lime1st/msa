@@ -31,19 +31,4 @@ public class ProductApplication {
         String mongoDbPort = ctx.getEnvironment().getProperty("spring.data.mongodb.port");
         LOG.info("Connected to MongoDb: {}/{}", mongoDbHost, mongoDbPort);
     }
-
-    @Autowired
-    MongoOperations mongoTemplate;
-
-    @EventListener(ContextRefreshedEvent.class)
-    public void initIndicesAfterStartup() {
-
-        MappingContext<? extends MongoPersistentEntity<?>, MongoPersistentProperty> mappingContext =
-            mongoTemplate.getConverter().getMappingContext();
-        IndexResolver resolver = new MongoPersistentEntityIndexResolver(mappingContext);
-
-        IndexOperations indexOps = mongoTemplate.indexOps(ProductDocument.class);
-        resolver.resolveIndexFor(ProductDocument.class)
-            .forEach(indexOps::ensureIndex);
-    }
 }
