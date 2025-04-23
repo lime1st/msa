@@ -8,7 +8,7 @@ services:
       - "27017:27017"
     command: mongod
     healthcheck:
-      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping').ok" ]
+      test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand(\"ping\").ok' --quiet"]
       interval: 5s
       timeout: 2s
       retries: 60
@@ -87,8 +87,6 @@ services:
 
   composite:
     image: msa.lime1st.microservices/composite:latest
-    ports:
-      - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
@@ -99,10 +97,17 @@ services:
 
   eureka:
     image: msa.lime1st.cloud/eureka:latest
-    ports:
-      - "8761:8761"
     networks:
       - microservices-network
+
+  gateway:
+    image: msa.lime1st.cloud/gateway:latest
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - microservices-network
+    ports:
+      - "8080:8080"
 
 # 네트워크 설정
 networks:

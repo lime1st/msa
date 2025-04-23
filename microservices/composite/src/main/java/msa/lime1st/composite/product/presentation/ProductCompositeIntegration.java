@@ -212,33 +212,4 @@ public class ProductCompositeIntegration implements ProductApi, RecommendationAp
         LOG.warn("Error body: {}", wcre.getResponseBodyAsString());
         return ex;
     }
-
-    public Mono<Health> getProductHealth() {
-        return getHealth(PRODUCT_SERVICE_URL);
-    }
-
-    public Mono<Health> getRecommendationHealth() {
-        return getHealth(RECOMMENDATION_SERVICE_URL);
-    }
-
-    public Mono<Health> getReviewHealth() {
-        return getHealth(REVIEW_SERVICE_URL);
-    }
-
-    private Mono<Health> getHealth(String url) {
-
-        url += "/actuator/health";
-        LOG.debug("Will call the Health API on URL: {}", url);
-
-        return webClient.get().uri(url)
-            .retrieve()
-            .bodyToMono(String.class)
-            .map(s -> new Health.Builder()
-                .up()
-                .build())
-            .onErrorResume(ex -> Mono.just(new Health.Builder()
-                .down(ex)
-                .build()))
-            .log(LOG.getName(), Level.FINE);
-    }
 }

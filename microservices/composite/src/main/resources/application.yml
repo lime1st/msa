@@ -4,6 +4,8 @@ springdoc:
   packagesToScan: msa.lime1st.composite.product
   pathsToMatch: /**
 
+server.forward-headers-strategy: framework
+
 api:
 
   common:
