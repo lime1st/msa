@@ -1,10 +1,15 @@
 package msa.lime1st.review;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.function.Consumer;
 import msa.lime1st.api.core.review.ReviewRequest;
+import msa.lime1st.api.event.Event;
+import msa.lime1st.api.event.Event.Type;
 import msa.lime1st.review.infrastructure.persistence.MySqlTestBase;
 import msa.lime1st.review.infrastructure.persistence.ReviewRepository;
+import msa.lime1st.util.exception.InvalidInputException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -16,7 +21,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+    properties = {"eureka.client.enabled=false"}
+)
 class ReviewApplicationTests extends MySqlTestBase {
 
     private static final Logger log = LoggerFactory.getLogger(ReviewApplicationTests.class);
@@ -26,6 +34,9 @@ class ReviewApplicationTests extends MySqlTestBase {
 
     @Autowired
     private ReviewRepository repository;
+
+    @Autowired
+    private Consumer<Event<Integer, ReviewRequest>> messageProcessor;
 
     @BeforeEach
     void setupDb() {
@@ -43,9 +54,9 @@ class ReviewApplicationTests extends MySqlTestBase {
 
         assertEquals(0, repository.findByProductId(productId).size());
 
-        postAndVerifyReview(productId, 1, HttpStatus.OK);
-        postAndVerifyReview(productId, 2, HttpStatus.OK);
-        postAndVerifyReview(productId, 3, HttpStatus.OK);
+        sendCreateReviewEvent(productId, 1);
+        sendCreateReviewEvent(productId, 2);
+        sendCreateReviewEvent(productId, 3);
 
         assertEquals(3, repository.findByProductId(productId).size());
 
@@ -63,15 +74,15 @@ class ReviewApplicationTests extends MySqlTestBase {
 
         assertEquals(0, repository.count());
 
-        postAndVerifyReview(productId, reviewId, HttpStatus.OK)
-            .jsonPath("$.productId").isEqualTo(productId)
-            .jsonPath("$.reviewId").isEqualTo(reviewId);
+        sendCreateReviewEvent(productId, reviewId);
 
         assertEquals(1, repository.count());
 
-        postAndVerifyReview(productId, reviewId, HttpStatus.UNPROCESSABLE_ENTITY)
-            .jsonPath("$.path").isEqualTo("/review")
-            .jsonPath("$.message").isEqualTo("Duplicate key, Product Id: 1, Review Id: 1");
+        InvalidInputException thrown = assertThrows(
+            InvalidInputException.class,
+            () -> sendCreateReviewEvent(productId, reviewId),
+            "Expected a InvalidInputException here!");
+        assertEquals("Duplicate key, Product Id: 1, Review Id: 1", thrown.getMessage());
 
         assertEquals(1, repository.count());
     }
@@ -82,13 +93,13 @@ class ReviewApplicationTests extends MySqlTestBase {
         int productId = 1;
         int reviewId = 1;
 
-        postAndVerifyReview(productId, reviewId, HttpStatus.OK);
+        sendCreateReviewEvent(productId, reviewId);
         assertEquals(1, repository.findByProductId(productId).size());
 
-        deleteAndVerifyReviewsByProductId(productId);
+        sendDeleteReviewEvent(productId);
         assertEquals(0, repository.findByProductId(productId).size());
 
-        deleteAndVerifyReviewsByProductId(productId);
+        sendDeleteReviewEvent(productId);
     }
 
     @Test
@@ -138,7 +149,7 @@ class ReviewApplicationTests extends MySqlTestBase {
             .expectBody();
     }
 
-    private WebTestClient.BodyContentSpec postAndVerifyReview(int productId, int reviewId, HttpStatus expectedStatus) {
+    private void sendCreateReviewEvent(int productId, int reviewId) {
         ReviewRequest review = ReviewRequest.of(
             productId,
             reviewId,
@@ -147,22 +158,20 @@ class ReviewApplicationTests extends MySqlTestBase {
             "Content " + reviewId,
             "SA"
         );
-        return client.post()
-            .uri("/review")
-            .body(Mono.just(review), ReviewRequest.class)
-            .accept(MediaType.APPLICATION_JSON)
-            .exchange()
-            .expectStatus().isEqualTo(expectedStatus)
-            .expectHeader().contentType(MediaType.APPLICATION_JSON)
-            .expectBody();
+        Event<Integer, ReviewRequest> event = Event.create(
+            Type.CREATE,
+            productId,
+            review
+        );
+        messageProcessor.accept(event);
     }
 
-    private void deleteAndVerifyReviewsByProductId(int productId) {
-        client.delete()
-            .uri("/review?productId=" + productId)
-            .accept(MediaType.APPLICATION_JSON)
-            .exchange()
-            .expectStatus().isEqualTo(HttpStatus.OK)
-            .expectBody();
+    private void sendDeleteReviewEvent(int productId) {
+        Event<Integer, ReviewRequest> event = Event.create(
+            Type.DELETE,
+            productId,
+            null
+        );
+        messageProcessor.accept(event);
     }
 }

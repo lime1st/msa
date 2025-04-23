@@ -4,15 +4,13 @@ import java.util.logging.Level;
 import msa.lime1st.api.core.product.ProductApi;
 import msa.lime1st.api.core.product.ProductRequest;
 import msa.lime1st.api.core.product.ProductResponse;
-import msa.lime1st.api.exception.InvalidInputException;
-import msa.lime1st.api.exception.NotFoundException;
-import msa.lime1st.product.infrastructure.persistence.ProductDocument;
+import msa.lime1st.util.exception.InvalidInputException;
+import msa.lime1st.util.exception.NotFoundException;
 import msa.lime1st.product.infrastructure.persistence.ProductRepository;
 import msa.lime1st.util.http.ApiUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
@@ -46,7 +44,8 @@ public class ProductControllerImpl implements ProductApi {
             .log(LOG.getName(), Level.FINE)
             .onErrorMap(
                 DuplicateKeyException.class,
-                ex -> new InvalidInputException("Duplicate key, Product Id: " + request.productId()))
+                ex -> new InvalidInputException(
+                    "Duplicate key, Product Id: " + request.productId()))
             .map(mapper::documentToResponse);
     }
 

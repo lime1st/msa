@@ -34,7 +34,7 @@ public interface ProductCompositeApi {
     })
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PostMapping("/product-composite")
-    Mono<Void> createProduct(@RequestBody ProductAggregateRequest body);
+    Mono<Void> postProduct(@RequestBody ProductAggregateRequest body);
 
     /**
      * Sample usage: "curl $HOST:$PORT/product-composite/1".
@@ -68,5 +68,5 @@ public interface ProductCompositeApi {
     })
     @ResponseStatus(HttpStatus.ACCEPTED)
     @DeleteMapping(value = "/product-composite/{productId}")
-    Mono<Void> deleteProduct(@PathVariable int productId);
+    Mono<Void> deleteProduct(@PathVariable("productId") int productId);
 }

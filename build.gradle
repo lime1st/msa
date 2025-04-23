@@ -3,17 +3,17 @@ plugins {
     id 'org.springframework.boot' version '3.4.4' apply false
 }
 
+group = 'msa.lime1st'
+
 ext {
     springBootVersion = '3.4.4'
     set('springCloudVersion', "2024.0.1")
-    mapstructVersion = "1.6.3"
 }
 
 subprojects {
     apply plugin: 'io.spring.dependency-management'
     apply plugin: 'java'
 
-    group = 'msa.lime1st'
     version = '1.0.0'
 
     java {
@@ -27,15 +27,12 @@ subprojects {
     }
 
     dependencies {
+        // Spring Platform BOM
         implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
 
+        // 공통 spring 의존성
+        implementation 'org.springframework.boot:spring-boot-starter-actuator'
         implementation 'org.springframework.boot:spring-boot-starter-webflux'
-
-        // mapstruct
-        implementation "org.mapstruct:mapstruct:${mapstructVersion}"
-        compileOnly "org.mapstruct:mapstruct-processor:${mapstructVersion}"
-        annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
-        testAnnotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
 
         // test
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -56,7 +53,7 @@ subprojects {
     afterEvaluate { project ->
         if (project.plugins.hasPlugin("org.springframework.boot")) {
             project.tasks.named("bootBuildImage") {
-                imageName = "${project.name}"
+                imageName = "${project.group}/${project.name}:latest"
                 environment = ["BP_JVM_VERSION": "17.*"]
             }
         }

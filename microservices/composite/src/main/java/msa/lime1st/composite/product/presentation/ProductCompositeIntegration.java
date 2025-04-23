@@ -16,8 +16,8 @@ import msa.lime1st.api.core.review.ReviewRequest;
 import msa.lime1st.api.core.review.ReviewResponse;
 import msa.lime1st.api.event.Event;
 import msa.lime1st.api.event.Event.Type;
-import msa.lime1st.api.exception.InvalidInputException;
-import msa.lime1st.api.exception.NotFoundException;
+import msa.lime1st.util.exception.InvalidInputException;
+import msa.lime1st.util.exception.NotFoundException;
 import msa.lime1st.util.http.HttpErrorInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,43 +40,26 @@ public class ProductCompositeIntegration implements ProductApi, RecommendationAp
 
     private static final Logger LOG = LoggerFactory.getLogger(ProductCompositeIntegration.class);
 
-    private final WebClient webClient;
-    private final ObjectMapper mapper;
-
-    private final String productServiceUrl;
-    private final String recommendationServiceUrl;
-    private final String reviewServiceUrl;
-
-    private final StreamBridge streamBridge;
+    private static final String PRODUCT_SERVICE_URL         = "http://product";
+    private static final String RECOMMENDATION_SERVICE_URL  = "http://recommendation";
+    private static final String REVIEW_SERVICE_URL          = "http://review";
 
     private final Scheduler publishEventScheduler;
+    private final WebClient webClient;
+    private final ObjectMapper mapper;
+    private final StreamBridge streamBridge;
 
     public ProductCompositeIntegration(
         Scheduler publishEventScheduler,
 
-        WebClient.Builder webClient,
+        WebClient.Builder webClientBuilder,
         ObjectMapper mapper,
-        StreamBridge streamBridge,
-
-        @Value("${app.product.host}") String productServiceHost,
-        @Value("${app.product.port}") int productServicePort,
-
-        @Value("${app.recommendation.host}") String recommendationServiceHost,
-        @Value("${app.recommendation.port}") int recommendationServicePort,
-
-        @Value("${app.review.host}") String reviewServiceHost,
-        @Value("${app.review.port}") int reviewServicePort
+        StreamBridge streamBridge
     ) {
         this.publishEventScheduler = publishEventScheduler;
-        this.webClient = webClient.build();
+        this.webClient = webClientBuilder.build();
         this.mapper = mapper;
         this.streamBridge = streamBridge;
-
-        productServiceUrl = "http://" + productServiceHost + ":" + productServicePort + "/product";
-        recommendationServiceUrl =
-            "http://" + recommendationServiceHost + ":" + recommendationServicePort
-                + "/recommendation";
-        reviewServiceUrl = "http://" + reviewServiceHost + ":" + reviewServicePort + "/review";
     }
 
     @Override
@@ -95,7 +78,7 @@ public class ProductCompositeIntegration implements ProductApi, RecommendationAp
 
     @Override
     public Mono<ProductResponse> getProduct(int productId) {
-        String url = productServiceUrl + "/" + productId;
+        String url = PRODUCT_SERVICE_URL + "/product/" + productId;
         LOG.debug("Will call the getProduct API on URL: {}", url);
 
         return webClient.get().uri(url)
@@ -120,7 +103,7 @@ public class ProductCompositeIntegration implements ProductApi, RecommendationAp
     @Override
     public Mono<RecommendationResponse> postRecommendation(RecommendationRequest request) {
 
-        LOG.info("Post recommendation request: {}", request);
+        LOG.info("4. Post recommendation request: {}", request);
 
         return Mono.fromCallable(() -> {
             sendMessage("recommendations-out-0", Event.create(
@@ -134,7 +117,7 @@ public class ProductCompositeIntegration implements ProductApi, RecommendationAp
     @Override
     public Flux<RecommendationResponse> getRecommendations(int productId) {
 
-        String url = recommendationServiceUrl + "/recommendation?productId=" + productId;
+        String url = RECOMMENDATION_SERVICE_URL + "/recommendation?productId=" + productId;
 
         LOG.debug("Will call the getRecommendations API on URL: {}", url);
 
@@ -164,7 +147,7 @@ public class ProductCompositeIntegration implements ProductApi, RecommendationAp
     @Override
     public Mono<ReviewResponse> postReview(ReviewRequest request) {
 
-        LOG.info("Post review request: {}", request);
+        LOG.info("5. Post review request: {}", request);
 
         return Mono.fromCallable(() -> {
             sendMessage("reviews-out-0", Event.create(
@@ -176,7 +159,7 @@ public class ProductCompositeIntegration implements ProductApi, RecommendationAp
     @Override
     public Flux<ReviewResponse> getReviews(int productId) {
 
-        String url = reviewServiceUrl + "/review?productId=" + productId;
+        String url = REVIEW_SERVICE_URL + "/review?productId=" + productId;
 
         LOG.debug("Will call the getReviews API on URL: {}", url);
 
@@ -196,41 +179,20 @@ public class ProductCompositeIntegration implements ProductApi, RecommendationAp
             .then();
     }
 
-    public Mono<Health> getProductHealth() {
-        return getHealth(productServiceUrl);
-    }
-
-    public Mono<Health> getRecommendationHealth() {
-        return getHealth(recommendationServiceUrl);
-    }
-
-    public Mono<Health> getReviewHealth() {
-        return getHealth(reviewServiceUrl);
-    }
-
-    private Mono<Health> getHealth(String url) {
-
-        url += "/actuator/health";
-        LOG.debug("Will call the Health API on URL: {}", url);
-
-        return webClient.get().uri(url)
-            .retrieve()
-            .bodyToMono(String.class)
-            .map(s -> new Health.Builder()
-                .up()
-                .build())
-            .onErrorResume(ex -> Mono.just(new Health.Builder()
-                .down(ex)
-                .build()))
-            .log(LOG.getName(), Level.FINE);
-    }
-
-    private void sendMessage(String bindingName, Event event) {
+    private <K, T> void sendMessage(String bindingName, Event<K, T> event) {
         LOG.debug("Sending a {} message to {}", event.eventType(), bindingName);
-        Message<Event> message = MessageBuilder.withPayload(event)
+        Message<Event<K, T>> message = MessageBuilder.withPayload(event)
             .setHeader("partitionKey", event.key())
             .build();
         streamBridge.send(bindingName, message);
+    }
+
+    private String getErrorMessage(WebClientResponseException ex) {
+        try {
+            return mapper.readValue(ex.getResponseBodyAsString(), HttpErrorInfo.class).message();
+        } catch (IOException e) {
+            return ex.getMessage();
+        }
     }
 
     private Throwable handleException(Throwable ex) {
@@ -251,11 +213,32 @@ public class ProductCompositeIntegration implements ProductApi, RecommendationAp
         return ex;
     }
 
-    private String getErrorMessage(WebClientResponseException ex) {
-        try {
-            return mapper.readValue(ex.getResponseBodyAsString(), HttpErrorInfo.class).message();
-        } catch (IOException e) {
-            return ex.getMessage();
-        }
+    public Mono<Health> getProductHealth() {
+        return getHealth(PRODUCT_SERVICE_URL);
+    }
+
+    public Mono<Health> getRecommendationHealth() {
+        return getHealth(RECOMMENDATION_SERVICE_URL);
+    }
+
+    public Mono<Health> getReviewHealth() {
+        return getHealth(REVIEW_SERVICE_URL);
+    }
+
+    private Mono<Health> getHealth(String url) {
+
+        url += "/actuator/health";
+        LOG.debug("Will call the Health API on URL: {}", url);
+
+        return webClient.get().uri(url)
+            .retrieve()
+            .bodyToMono(String.class)
+            .map(s -> new Health.Builder()
+                .up()
+                .build())
+            .onErrorResume(ex -> Mono.just(new Health.Builder()
+                .down(ex)
+                .build()))
+            .log(LOG.getName(), Level.FINE);
     }
 }

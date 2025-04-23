@@ -4,7 +4,7 @@ import java.util.function.Consumer;
 import msa.lime1st.api.core.product.ProductApi;
 import msa.lime1st.api.core.product.ProductRequest;
 import msa.lime1st.api.event.Event;
-import msa.lime1st.api.exception.EventProcessingException;
+import msa.lime1st.util.exception.EventProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -23,6 +23,7 @@ public class MessageProcessorConfig {
 
   @Bean
   public Consumer<Event<Integer, ProductRequest>> messageProcessor() {
+
     return event -> {
       LOG.info("Process message created at {}...", event.eventCreatedAt());
 

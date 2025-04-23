@@ -1,4 +1,4 @@
-package msa.lime1st.api.exception;
+package msa.lime1st.util.exception;
 
 public class EventProcessingException extends RuntimeException {
 

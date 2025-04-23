@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 import msa.lime1st.api.core.recommendation.RecommendationRequest;
 import msa.lime1st.api.event.Event;
 import msa.lime1st.api.event.Event.Type;
-import msa.lime1st.api.exception.InvalidInputException;
+import msa.lime1st.util.exception.InvalidInputException;
 import msa.lime1st.recommendation.infrastructure.persistence.MongoDbTestBase;
 import msa.lime1st.recommendation.infrastructure.persistence.RecommendationRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,7 +18,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+    properties = {"eureka.client.enabled=false"}
+)
 class RecommendationApplicationTests extends MongoDbTestBase {
 
     @Autowired

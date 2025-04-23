@@ -4,7 +4,7 @@ import java.util.logging.Level;
 import msa.lime1st.api.core.recommendation.RecommendationApi;
 import msa.lime1st.api.core.recommendation.RecommendationRequest;
 import msa.lime1st.api.core.recommendation.RecommendationResponse;
-import msa.lime1st.api.exception.InvalidInputException;
+import msa.lime1st.util.exception.InvalidInputException;
 import msa.lime1st.recommendation.infrastructure.persistence.RecommendationRepository;
 import msa.lime1st.util.http.ApiUtil;
 import org.slf4j.Logger;

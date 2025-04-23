@@ -7,8 +7,8 @@ import java.util.Collections;
 import msa.lime1st.api.core.product.ProductResponse;
 import msa.lime1st.api.core.recommendation.RecommendationResponse;
 import msa.lime1st.api.core.review.ReviewResponse;
-import msa.lime1st.api.exception.InvalidInputException;
-import msa.lime1st.api.exception.NotFoundException;
+import msa.lime1st.util.exception.InvalidInputException;
+import msa.lime1st.util.exception.NotFoundException;
 import msa.lime1st.composite.product.presentation.ProductCompositeIntegration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +21,10 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+    properties = {"eureka.client.enabled=false"}
+)
 class CompositeApplicationTests {
 
     private static final int PRODUCT_ID_OK = 1;

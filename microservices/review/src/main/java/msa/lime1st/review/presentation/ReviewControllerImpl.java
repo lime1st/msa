@@ -5,7 +5,7 @@ import java.util.logging.Level;
 import msa.lime1st.api.core.review.ReviewApi;
 import msa.lime1st.api.core.review.ReviewRequest;
 import msa.lime1st.api.core.review.ReviewResponse;
-import msa.lime1st.api.exception.InvalidInputException;
+import msa.lime1st.util.exception.InvalidInputException;
 import msa.lime1st.review.infrastructure.persistence.ReviewEntity;
 import msa.lime1st.review.infrastructure.persistence.ReviewRepository;
 import msa.lime1st.util.http.ApiUtil;

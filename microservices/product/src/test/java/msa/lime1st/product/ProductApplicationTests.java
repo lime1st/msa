@@ -10,9 +10,9 @@ import java.util.function.Consumer;
 import msa.lime1st.api.core.product.ProductRequest;
 import msa.lime1st.api.event.Event;
 import msa.lime1st.api.event.Event.Type;
-import msa.lime1st.api.exception.InvalidInputException;
 import msa.lime1st.product.infrastructure.persistence.MongoDbTestBase;
 import msa.lime1st.product.infrastructure.persistence.ProductRepository;
+import msa.lime1st.util.exception.InvalidInputException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +21,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+    properties = {"eureka.client.enabled=false"}
+)
 class ProductApplicationTests extends MongoDbTestBase {
 
     @Autowired
@@ -147,6 +150,7 @@ class ProductApplicationTests extends MongoDbTestBase {
             productId,
             product
         );
+        // 테스트를 위해 메시징 시스템(rabbitmq or kafka)을 건너뛰고 메시지 프로세서를 직접 호출한다.
         messageProcessor.accept(event);
     }
 

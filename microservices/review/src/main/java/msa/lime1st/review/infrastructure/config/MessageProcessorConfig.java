@@ -1,8 +1,8 @@
-package msa.lime1st.recommendation.infrastructure.config;
+package msa.lime1st.review.infrastructure.config;
 
 import java.util.function.Consumer;
-import msa.lime1st.api.core.recommendation.RecommendationApi;
-import msa.lime1st.api.core.recommendation.RecommendationRequest;
+import msa.lime1st.api.core.review.ReviewApi;
+import msa.lime1st.api.core.review.ReviewRequest;
 import msa.lime1st.api.event.Event;
 import msa.lime1st.util.exception.EventProcessingException;
 import org.slf4j.Logger;
@@ -15,29 +15,30 @@ public class MessageProcessorConfig {
 
   private static final Logger LOG = LoggerFactory.getLogger(MessageProcessorConfig.class);
 
-  private final RecommendationApi api;
+  private final ReviewApi api;
 
-  public MessageProcessorConfig(RecommendationApi api) {
+  public MessageProcessorConfig(ReviewApi api) {
     this.api = api;
   }
 
   @Bean
-  public Consumer<Event<Integer, RecommendationRequest>> messageProcessor() {
+  public Consumer<Event<Integer, ReviewRequest>> messageProcessor() {
+
     return event -> {
       LOG.info("Process message created at {}...", event.eventCreatedAt());
 
       switch (event.eventType()) {
 
         case CREATE:
-          RecommendationRequest request = event.data();
+          ReviewRequest request = event.data();
           LOG.info("Create request with ID: {}", request.productId());
-          api.postRecommendation(request).block();
+          api.postReview(request).block();
           break;
 
         case DELETE:
           int productId = event.key();
           LOG.info("Delete recommendations with ProductID: {}", productId);
-          api.deleteRecommendations(productId).block();
+          api.deleteReviews(productId).block();
           break;
 
         default:
