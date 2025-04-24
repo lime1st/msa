@@ -107,7 +107,7 @@ services:
     networks:
       - microservices-network
     ports:
-      - "8080:8080"
+      - "8443:8443"
 
 # 네트워크 설정
 networks:
