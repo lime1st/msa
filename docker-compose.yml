@@ -109,6 +109,18 @@ services:
     ports:
       - "8443:8443"
 
+  authorization:
+    image: msa.lime1st.cloud/authorization:latest
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:9999/actuator/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 60
+    networks:
+      - microservices-network
+
 # 네트워크 설정
 networks:
   microservices-network:
