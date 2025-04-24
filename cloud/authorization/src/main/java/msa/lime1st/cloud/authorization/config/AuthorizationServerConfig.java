@@ -32,11 +32,11 @@ public class AuthorizationServerConfig {
     @Bean
     public RegisteredClientRepository registeredClientRepository() {
         // application.yml 에서도 설정이 가능하다.
-        // 현재 oidc-client 설정이 되어 있으니 참고.
+        // spring security document 참고
 
         RegisteredClient writerClient = RegisteredClient.withId(UUID.randomUUID().toString())
             .clientId("writer")
-            .clientSecret("secret")
+            .clientSecret("writer")
             .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
             .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
             .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
@@ -53,7 +53,7 @@ public class AuthorizationServerConfig {
 
         RegisteredClient readerClient = RegisteredClient.withId(UUID.randomUUID().toString())
             .clientId("reader")
-            .clientSecret("secret")
+            .clientSecret("reader")
             .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
             .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
             .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
