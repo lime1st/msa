@@ -16,9 +16,6 @@ dependencies {
     implementation project(':api')
     implementation project(':util')
 
-    // cloud
-    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
-
     // mapstruct
     implementation "org.mapstruct:mapstruct:${mapstructVersion}"
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"

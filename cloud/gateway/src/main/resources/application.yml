@@ -48,7 +48,7 @@ spring.cloud.gateway.routes:
   - id: product-composite-swagger-ui-webjars
     uri: lb://product-composite
     predicates:
-    - Path=/webjars/**
+      - Path=/webjars/**
 
   - id: eureka-api
     uri: http://${app.eureka-server}:8761

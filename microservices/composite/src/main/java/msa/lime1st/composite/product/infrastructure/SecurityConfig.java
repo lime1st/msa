@@ -1,5 +1,8 @@
-package msa.lime1st.cloud.gateway.config;
+package msa.lime1st.composite.product.infrastructure;
 
+import static org.springframework.http.HttpMethod.DELETE;
+import static org.springframework.http.HttpMethod.GET;
+import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.security.config.Customizer.withDefaults;
 
 import org.springframework.context.annotation.Bean;
@@ -15,16 +18,13 @@ public class SecurityConfig {
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
 
         http
-            .csrf(CsrfSpec::disable)
             .authorizeExchange(authorizeExchange -> authorizeExchange
-                .pathMatchers("/headerrouting/**").permitAll()
-                .pathMatchers("/actuator/**").permitAll()
-                .pathMatchers("/eureka/**").permitAll()
-                .pathMatchers("/oauth2/**").permitAll()
-                .pathMatchers("/login/**").permitAll()
-                .pathMatchers("/error/**").permitAll()
                 .pathMatchers("/openapi/**").permitAll()
                 .pathMatchers("/webjars/**").permitAll()
+                .pathMatchers("/actuator/**").permitAll()
+                .pathMatchers(POST, "/product-composite/**").hasAuthority("SCOPE_product:write")
+                .pathMatchers(DELETE, "/product-composite/**").hasAuthority("SCOPE_product:write")
+                .pathMatchers(GET, "/product-composite/**").hasAuthority("SCOPE_product:read")
                 .anyExchange().authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(withDefaults()));
 
