@@ -23,8 +23,11 @@ import reactor.core.publisher.Mono;
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    properties = {"eureka.client.enabled=false"}
-)
+    classes = {TestSecurityConfig.class},
+    properties = {
+        "spring.security.oauth2.resourceserver.jwt.issuer-uri=",
+        "spring.main.allow-bean-definition-overriding=true",
+        "eureka.client.enabled=false"})
 class CompositeApplicationTests {
 
     private static final int PRODUCT_ID_OK = 1;

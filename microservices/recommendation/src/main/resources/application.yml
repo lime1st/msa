@@ -16,10 +16,10 @@ eureka:
     leaseExpirationDurationInSeconds: 5
 
 spring.data.mongodb:
-      auto-index-creation: true
-      host: localhost
-      port: 27017
-      database: recommendation-db
+  auto-index-creation: true
+  host: localhost
+  port: 27017
+  database: recommendation-db
 
 spring.cloud.function.definition: messageProcessor
 

@@ -1,4 +1,4 @@
-package msa.lime1st.cloud.gateway;
+package msa.lime1st.cloud.gateway.config;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -34,6 +34,7 @@ public class HealthCheckConfig {
         registry.put("recommendation",    () -> getHealth("http://recommendation"));
         registry.put("review",            () -> getHealth("http://review"));
         registry.put("composite",         () -> getHealth("http://composite"));
+        registry.put("authorization",     () -> getHealth("http://authorization"));
 
         return CompositeReactiveHealthContributor.fromMap(registry);
     }

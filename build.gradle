@@ -34,6 +34,8 @@ subprojects {
         implementation 'org.springframework.boot:spring-boot-starter-actuator'
         implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
+        implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+
         // test
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
         testImplementation 'io.projectreactor:reactor-test'
@@ -74,49 +76,4 @@ tasks.register("buildAllImages") {
     dependsOn subprojects
             .findAll { it.plugins.hasPlugin("org.springframework.boot") }
             .collect { it.tasks.named("bootBuildImage") }
-}
-
-// 공통 Dockerfile 템플릿
-def dockerfileTemplate = { mainClass ->
-    """
-    FROM eclipse-temurin:17-jdk as extract
-    WORKDIR /workspace
-    COPY build/libs/*.jar app.jar
-    RUN java -Djarmode=layertools -jar app.jar extract
-
-    FROM eclipse-temurin:17-jdk as runtime
-    WORKDIR /app
-    COPY --from=extract /workspace/dependencies/ ./dependencies/
-    COPY --from=extract /workspace/snapshot-dependencies/ ./snapshot-dependencies/
-    COPY --from=extract /workspace/resources/ ./resources/
-    COPY --from=extract /workspace/application/ ./application/
-    ENTRYPOINT ["java", "-Xms128m", "-Xmx256m", "-cp", "resources:application:dependencies/*:snapshot-dependencies/*", "${mainClass}"]
-    """.stripIndent()
-}
-
-// 자동 Dockerfile 생성 태스크
-tasks.register("generateDockerfiles") {
-    group = "docker"
-    description = "Generates Dockerfiles for all Spring Boot subprojects"
-
-    doLast {
-        def targets = [
-                product: "msa.lime1st.product.ProductApplication",
-                recommendation: "msa.lime1st.recommendation.RecommendationApplication",
-                review: "msa.lime1st.review.ReviewApplication",
-                composite: "msa.lime1st.composite.CompositeApplication",
-        ]
-
-        targets.each { name, mainClass ->
-            def dir = file("microservices/${name}")
-            def dockerfile = new File(dir, "Dockerfile")
-
-            if (!dockerfile.exists()) {
-                println "▶️ Creating Dockerfile for ${name}"
-                dockerfile.text = dockerfileTemplate(mainClass)
-            } else {
-                println "⚠️ Dockerfile for ${name} already exists — skipped."
-            }
-        }
-    }
 }

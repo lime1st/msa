@@ -1,5 +1,6 @@
 package msa.lime1st.composite.product.presentation;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -19,6 +20,11 @@ import msa.lime1st.api.core.review.ReviewResponse;
 import msa.lime1st.util.http.ApiUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextImpl;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
@@ -26,6 +32,8 @@ import reactor.core.publisher.Mono;
 public class ProductCompositeControllerImpl implements ProductCompositeApi {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProductCompositeControllerImpl.class);
+
+    private final SecurityContext nullSecCtx = new SecurityContextImpl();
 
     private final ApiUtil apiUtil;
     private final ProductCompositeIntegration integration;
@@ -47,6 +55,8 @@ public class ProductCompositeControllerImpl implements ProductCompositeApi {
                 aggregateRequest.productId());
 
             List<Mono<?>> monoList = new ArrayList<>();
+
+            monoList.add(getLogAuthorizationInfoMono());
 
             // Product 등록
             ProductRequest productRequest = ProductRequest.of(
@@ -117,11 +127,16 @@ public class ProductCompositeControllerImpl implements ProductCompositeApi {
             productId).collectList();
         Mono<List<ReviewResponse>> reviewsMono = integration.getReviews(productId).collectList();
 
-        return Mono.zip(productMono, recommendationsMono, reviewsMono)
+        return Mono.zip(
+                getSecurityContextMono(),
+                productMono,
+                recommendationsMono,
+                reviewsMono)
             .map(tuple -> createProductAggregateResponse(
                 tuple.getT1(),
                 tuple.getT2(),
                 tuple.getT3(),
+                tuple.getT4(),
                 apiUtil.getServiceAddress()
             ))
             .doOnError(ex -> LOG.warn("getCompositeProduct failed: {}", ex.toString()))
@@ -137,9 +152,10 @@ public class ProductCompositeControllerImpl implements ProductCompositeApi {
 
             /*
             Mono.when(...)은 여러 Mono<Void>를 실행하고, 결과 없이 성공 여부만 확인할 때 적합합니다.
-            ono.zip(...).then()과 기능적으로 같지만, 목적이 더 명확하게 표현되어있습니다.
+            Mono.zip(...).then()과 기능적으로 같지만, 목적이 더 명확하게 표현되어있습니다.
              */
             return Mono.when(
+                    getLogAuthorizationInfoMono(),
                     integration.deleteProduct(productId),
                     integration.deleteRecommendations(productId),
                     integration.deleteReviews(productId)
@@ -154,11 +170,13 @@ public class ProductCompositeControllerImpl implements ProductCompositeApi {
     }
 
     private ProductAggregateResponse createProductAggregateResponse(
+        SecurityContext context,
         ProductResponse response,
         List<RecommendationResponse> recommendations,
         List<ReviewResponse> reviews,
         String serviceAddress
     ) {
+        logAuthorizationInfo(context);
 
         // 1. Setup response info
         int productId = response.productId();
@@ -206,5 +224,41 @@ public class ProductCompositeControllerImpl implements ProductCompositeApi {
             reviewSummaries,
             serviceAddresses
         );
+    }
+
+    private Mono<SecurityContext> getLogAuthorizationInfoMono() {
+        return getSecurityContextMono().doOnNext(this::logAuthorizationInfo);
+    }
+
+    private Mono<SecurityContext> getSecurityContextMono() {
+        return ReactiveSecurityContextHolder.getContext().defaultIfEmpty(nullSecCtx);
+    }
+
+    private void logAuthorizationInfo(SecurityContext sc) {
+        if (sc != null && sc.getAuthentication() != null
+            && sc.getAuthentication() instanceof JwtAuthenticationToken) {
+            Jwt jwtToken = ((JwtAuthenticationToken) sc.getAuthentication()).getToken();
+            logAuthorizationInfo(jwtToken);
+        } else {
+            LOG.warn("No JWT based Authentication supplied, running tests are we?");
+        }
+    }
+
+    private void logAuthorizationInfo(Jwt jwt) {
+        if (jwt == null) {
+            LOG.warn("No JWT supplied, running tests are we?");
+        } else {
+            if (LOG.isDebugEnabled()) {
+                URL issuer = jwt.getIssuer();
+                List<String> audience = jwt.getAudience();
+                Object subject = jwt.getClaims().get("sub");
+                Object scopes = jwt.getClaims().get("scope");
+                Object expires = jwt.getClaims().get("exp");
+
+                LOG.debug(
+                    "Authorization info: Subject: {}, scopes: {}, expires {}: issuer: {}, audience: {}",
+                    subject, scopes, expires, issuer, audience);
+            }
+        }
     }
 }

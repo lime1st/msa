@@ -1,4 +1,4 @@
-package msa.lime1st.cloud.gateway;
+package msa.lime1st.cloud.gateway.config;
 
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
