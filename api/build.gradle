@@ -1,0 +1,8 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    // swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-common:2.8.6'
+}

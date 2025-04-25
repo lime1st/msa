@@ -1,0 +1,122 @@
+plugins {
+    id 'io.spring.dependency-management' version '1.1.7' apply false
+    id 'org.springframework.boot' version '3.4.4' apply false
+}
+
+group = 'msa.lime1st'
+
+ext {
+    springBootVersion = '3.4.4'
+    set('springCloudVersion', "2024.0.1")
+}
+
+subprojects {
+    apply plugin: 'io.spring.dependency-management'
+    apply plugin: 'java'
+
+    version = '1.0.0'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        // Spring Platform BOM
+        implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
+
+        // 공통 spring 의존성
+        implementation 'org.springframework.boot:spring-boot-starter-actuator'
+        implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+        // test
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+        testImplementation 'io.projectreactor:reactor-test'
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        }
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+
+    // ✅ Spring Boot 플러그인이 적용된 모듈에서만 bootBuildImage 설정: 빌드팩 기반
+    afterEvaluate { project ->
+        if (project.plugins.hasPlugin("org.springframework.boot")) {
+            project.tasks.named("bootBuildImage") {
+                imageName = "${project.group}/${project.name}:latest"
+                environment = ["BP_JVM_VERSION": "17.*"]
+            }
+
+            project.tasks.named("bootJar") {
+                layered {
+                    enabled = true
+                }
+            }
+        }
+    }
+}
+
+// 컨테이너 이미지 빌드 동시 실행
+tasks.register("buildAllImages") {
+    group = "build"
+    description = "Build bootBuildImage for all Spring Boot subprojects"
+
+    dependsOn subprojects
+            .findAll { it.plugins.hasPlugin("org.springframework.boot") }
+            .collect { it.tasks.named("bootBuildImage") }
+}
+
+// 공통 Dockerfile 템플릿
+def dockerfileTemplate = { mainClass ->
+    """
+    FROM eclipse-temurin:17-jdk as extract
+    WORKDIR /workspace
+    COPY build/libs/*.jar app.jar
+    RUN java -Djarmode=layertools -jar app.jar extract
+
+    FROM eclipse-temurin:17-jdk as runtime
+    WORKDIR /app
+    COPY --from=extract /workspace/dependencies/ ./dependencies/
+    COPY --from=extract /workspace/snapshot-dependencies/ ./snapshot-dependencies/
+    COPY --from=extract /workspace/resources/ ./resources/
+    COPY --from=extract /workspace/application/ ./application/
+    ENTRYPOINT ["java", "-Xms128m", "-Xmx256m", "-cp", "resources:application:dependencies/*:snapshot-dependencies/*", "${mainClass}"]
+    """.stripIndent()
+}
+
+// 자동 Dockerfile 생성 태스크
+tasks.register("generateDockerfiles") {
+    group = "docker"
+    description = "Generates Dockerfiles for all Spring Boot subprojects"
+
+    doLast {
+        def targets = [
+                product: "msa.lime1st.product.ProductApplication",
+                recommendation: "msa.lime1st.recommendation.RecommendationApplication",
+                review: "msa.lime1st.review.ReviewApplication",
+                composite: "msa.lime1st.composite.CompositeApplication",
+        ]
+
+        targets.each { name, mainClass ->
+            def dir = file("microservices/${name}")
+            def dockerfile = new File(dir, "Dockerfile")
+
+            if (!dockerfile.exists()) {
+                println "▶️ Creating Dockerfile for ${name}"
+                dockerfile.text = dockerfileTemplate(mainClass)
+            } else {
+                println "⚠️ Dockerfile for ${name} already exists — skipped."
+            }
+        }
+    }
+}

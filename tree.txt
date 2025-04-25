@@ -1,0 +1,238 @@
+.
+├── api
+│   ├── build.gradle
+│   └── src
+│       ├── main
+│       │   ├── java
+│       │   │   └── msa
+│       │   │       └── lime1st
+│       │   │           └── api
+│       │   │               ├── composite
+│       │   │               │   └── product
+│       │   │               │       ├── ProductAggregateRequest.java
+│       │   │               │       ├── ProductAggregateResponse.java
+│       │   │               │       ├── ProductCompositeApi.java
+│       │   │               │       ├── RecommendationSummary.java
+│       │   │               │       ├── ReviewSummary.java
+│       │   │               │       └── ServiceAddresses.java
+│       │   │               ├── core
+│       │   │               │   ├── product
+│       │   │               │   │   ├── ProductApi.java
+│       │   │               │   │   ├── ProductRequest.java
+│       │   │               │   │   └── ProductResponse.java
+│       │   │               │   ├── recommendation
+│       │   │               │   │   ├── RecommendationApi.java
+│       │   │               │   │   ├── RecommendationRequest.java
+│       │   │               │   │   └── RecommendationResponse.java
+│       │   │               │   └── review
+│       │   │               │       ├── ReviewApi.java
+│       │   │               │       ├── ReviewRequest.java
+│       │   │               │       └── ReviewResponse.java
+│       │   │               └── event
+│       │   │                   └── Event.java
+│       │   └── resources
+│       └── test
+│           ├── java
+│           └── resources
+├── build.gradle
+├── cloud
+│   └── eureka
+│       ├── build.gradle
+│       └── src
+│           ├── main
+│           │   ├── java
+│           │   │   └── msa
+│           │   │       └── lime1st
+│           │   │           └── cloud
+│           │   │               └── eureka
+│           │   │                   └── EurekaApplication.java
+│           │   └── resources
+│           │       └── application.properties
+│           └── test
+│               └── java
+│                   └── msa
+│                       └── lime1st
+│                           └── cloud
+│                               └── eureka
+│                                   └── EurekaApplicationTests.java
+├── docker-compose.yml
+├── gradle
+│   └── wrapper
+│       ├── gradle-wrapper.jar
+│       └── gradle-wrapper.properties
+├── gradlew
+├── gradlew.bat
+├── microservices
+│   ├── composite
+│   │   ├── Dockerfile
+│   │   ├── build.gradle
+│   │   └── src
+│   │       ├── main
+│   │       │   ├── java
+│   │       │   │   └── msa
+│   │       │   │       └── lime1st
+│   │       │   │           └── composite
+│   │       │   │               ├── CompositeApplication.java
+│   │       │   │               └── product
+│   │       │   │                   ├── infrastructure
+│   │       │   │                   │   ├── HealthIndicator.java
+│   │       │   │                   │   ├── SchedulerConfig.java
+│   │       │   │                   │   ├── SwaggerConfig.java
+│   │       │   │                   │   └── WebConfig.java
+│   │       │   │                   └── presentation
+│   │       │   │                       ├── ProductCompositeControllerImpl.java
+│   │       │   │                       └── ProductCompositeIntegration.java
+│   │       │   └── resources
+│   │       │       ├── application.yml
+│   │       │       └── banner.txt
+│   │       └── test
+│   │           ├── java
+│   │           │   └── msa
+│   │           │       └── lime1st
+│   │           │           └── composite
+│   │           │               ├── CompositeApplicationTests.java
+│   │           │               ├── IsSameEvent.java
+│   │           │               ├── IsSameEventTests.java
+│   │           │               └── MessagingTests.java
+│   │           └── resources
+│   ├── product
+│   │   ├── Dockerfile
+│   │   ├── build.gradle
+│   │   └── src
+│   │       ├── main
+│   │       │   ├── java
+│   │       │   │   └── msa
+│   │       │   │       └── lime1st
+│   │       │   │           └── product
+│   │       │   │               ├── ProductApplication.java
+│   │       │   │               ├── infrastructure
+│   │       │   │               │   ├── config
+│   │       │   │               │   │   └── MessageProcessorConfig.java
+│   │       │   │               │   └── persistence
+│   │       │   │               │       ├── ProductDocument.java
+│   │       │   │               │       └── ProductRepository.java
+│   │       │   │               └── presentation
+│   │       │   │                   ├── ProductControllerImpl.java
+│   │       │   │                   └── ProductMapper.java
+│   │       │   └── resources
+│   │       │       ├── application.yml
+│   │       │       └── banner.txt
+│   │       └── test
+│   │           ├── java
+│   │           │   └── msa
+│   │           │       └── lime1st
+│   │           │           └── product
+│   │           │               ├── ProductApplicationTests.java
+│   │           │               ├── infrastructure
+│   │           │               │   └── persistence
+│   │           │               │       ├── MongoDbTestBase.java
+│   │           │               │       └── ProductRepositoryTest.java
+│   │           │               └── presentation
+│   │           │                   └── ProductMapperTest.java
+│   │           └── resources
+│   │               └── logback-test.xml
+│   ├── recommendation
+│   │   ├── Dockerfile
+│   │   ├── build.gradle
+│   │   └── src
+│   │       ├── main
+│   │       │   ├── java
+│   │       │   │   └── msa
+│   │       │   │       └── lime1st
+│   │       │   │           └── recommendation
+│   │       │   │               ├── RecommendationApplication.java
+│   │       │   │               ├── infrastructure
+│   │       │   │               │   ├── config
+│   │       │   │               │   │   └── MessageProcessorConfig.java
+│   │       │   │               │   └── persistence
+│   │       │   │               │       ├── RecommendationDocument.java
+│   │       │   │               │       └── RecommendationRepository.java
+│   │       │   │               └── presentation
+│   │       │   │                   ├── RecommendationControllerImpl.java
+│   │       │   │                   └── RecommendationMapper.java
+│   │       │   └── resources
+│   │       │       ├── application.yml
+│   │       │       └── banner.txt
+│   │       └── test
+│   │           ├── java
+│   │           │   └── msa
+│   │           │       └── lime1st
+│   │           │           └── recommendation
+│   │           │               ├── RecommendationApplicationTests.java
+│   │           │               ├── infrastructure
+│   │           │               │   └── persistence
+│   │           │               │       ├── MongoDbTestBase.java
+│   │           │               │       └── RecommendationRepositoryTest.java
+│   │           │               └── presentation
+│   │           │                   └── RecommendationMapperTest.java
+│   │           └── resources
+│   │               └── logback-test.xml
+│   └── review
+│       ├── Dockerfile
+│       ├── build.gradle
+│       └── src
+│           ├── main
+│           │   ├── java
+│           │   │   └── msa
+│           │   │       └── lime1st
+│           │   │           └── review
+│           │   │               ├── ReviewApplication.java
+│           │   │               ├── infrastructure
+│           │   │               │   ├── config
+│           │   │               │   │   ├── MessageProcessorConfig.java
+│           │   │               │   │   └── SchedulerConfig.java
+│           │   │               │   └── persistence
+│           │   │               │       ├── ReviewEntity.java
+│           │   │               │       └── ReviewRepository.java
+│           │   │               └── presentation
+│           │   │                   ├── ReviewControllerImpl.java
+│           │   │                   └── ReviewMapper.java
+│           │   └── resources
+│           │       ├── application.yml
+│           │       └── banner.txt
+│           └── test
+│               ├── java
+│               │   └── msa
+│               │       └── lime1st
+│               │           └── review
+│               │               ├── ReviewApplicationTests.java
+│               │               ├── infrastructure
+│               │               │   └── persistence
+│               │               │       ├── MySqlTestBase.java
+│               │               │       └── ReviewRepositoryTest.java
+│               │               └── presentation
+│               │                   └── ReviewMapperTest.java
+│               └── resources
+│                   └── logback-test.xml
+├── settings.gradle
+├── start.sh
+├── test-em-all.bash
+├── tree.txt
+└── util
+    ├── build.gradle
+    └── src
+        ├── main
+        │   ├── java
+        │   │   └── msa
+        │   │       └── lime1st
+        │   │           └── util
+        │   │               ├── exception
+        │   │               │   ├── BadRequestException.java
+        │   │               │   ├── EventProcessingException.java
+        │   │               │   ├── InvalidInputException.java
+        │   │               │   └── NotFoundException.java
+        │   │               └── http
+        │   │                   ├── ApiUtil.java
+        │   │                   ├── GlobalControllerException.java
+        │   │                   └── HttpErrorInfo.java
+        │   └── resources
+        └── test
+            ├── java
+            │   └── msa
+            │       └── lime1st
+            │           └── util
+            │               └── reactor
+            │                   └── ReactorTests.java
+            └── resources
+
+135 directories, 101 files

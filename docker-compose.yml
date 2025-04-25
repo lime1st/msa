@@ -1,0 +1,121 @@
+version: '3.8'
+
+services:
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    command: mongod
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand(\"ping\").ok' --quiet"]
+      interval: 5s
+      timeout: 2s
+      retries: 60
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - microservices-network
+
+  mysql:
+    image: mysql:latest
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=review-db
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+    healthcheck:
+      test: [ "CMD", "mysql", "-uuser", "-ppassword", "-e", "SHOW DATABASES;" ]
+      interval: 5s
+      timeout: 2s
+      retries: 60
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - microservices-network
+
+  rabbitmq:
+    image: rabbitmq:management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 5s
+      timeout: 2s
+      retries: 60
+    networks:
+      - microservices-network
+
+  product:
+    image: msa.lime1st.microservices/product:latest
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - microservices-network
+
+  recommendation:
+    image: msa.lime1st.microservices/recommendation:latest
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - microservices-network
+
+  review:
+    image: msa.lime1st.microservices/review:latest
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - microservices-network
+
+  composite:
+    image: msa.lime1st.microservices/composite:latest
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - microservices-network
+
+  eureka:
+    image: msa.lime1st.cloud/eureka:latest
+    networks:
+      - microservices-network
+
+  gateway:
+    image: msa.lime1st.cloud/gateway:latest
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - microservices-network
+    ports:
+      - "8080:8080"
+
+# 네트워크 설정
+networks:
+  microservices-network:
+
+# 볼륨 설정
+volumes:
+  mongodb_data:
+    driver: local
+  mysql_data:
+    driver: local

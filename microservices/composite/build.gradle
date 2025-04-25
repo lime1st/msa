@@ -1,0 +1,28 @@
+plugins {
+    id 'org.springframework.boot'
+}
+
+group = 'msa.lime1st.microservices'
+
+jar {
+    enabled = false
+}
+
+dependencies {
+    implementation project(':api')
+    implementation project(':util')
+
+    // cloud
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+
+    // messaging
+    implementation 'org.springframework.cloud:spring-cloud-starter-stream-rabbit'
+    implementation 'org.springframework.cloud:spring-cloud-starter-stream-kafka'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2'
+
+    // swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.6'
+
+    // test
+    testImplementation 'org.springframework.cloud:spring-cloud-stream-test-binder'
+}
