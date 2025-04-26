@@ -12,6 +12,12 @@ ext {
     mapstructVersion = "1.6.3"
 }
 
+configurations {
+    implementation {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-security'
+    }
+}
+
 dependencies {
     implementation project(':api')
     implementation project(':util')
