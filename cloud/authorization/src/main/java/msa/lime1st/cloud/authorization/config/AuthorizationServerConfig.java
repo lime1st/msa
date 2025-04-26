@@ -11,8 +11,12 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -28,15 +32,21 @@ import org.springframework.security.oauth2.server.authorization.settings.TokenSe
 @Configuration(proxyBeanMethods = false)
 public class AuthorizationServerConfig {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthorizationServerConfig.class);
+    @Value("${app.auth-server}")
+    private String appAuthServer;
+
+    @Value("${server.port}")
+    private String serverPort;
 
     @Bean
-    public RegisteredClientRepository registeredClientRepository() {
+    public RegisteredClientRepository registeredClientRepository(PasswordEncoder passwordEncoder) {
         // application.yml 에서도 설정이 가능하다.
         // spring security document 참고
 
         RegisteredClient writerClient = RegisteredClient.withId(UUID.randomUUID().toString())
             .clientId("writer")
-            .clientSecret("writer")
+            .clientSecret(passwordEncoder.encode("writer"))
             .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
             .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
             .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
@@ -53,7 +63,7 @@ public class AuthorizationServerConfig {
 
         RegisteredClient readerClient = RegisteredClient.withId(UUID.randomUUID().toString())
             .clientId("reader")
-            .clientSecret("reader")
+            .clientSecret(passwordEncoder.encode("reader"))
             .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
             .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
             .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
@@ -102,8 +112,10 @@ public class AuthorizationServerConfig {
 
     @Bean
     AuthorizationServerSettings authorizationServerSettings() {
+        String issuer = "http://" + appAuthServer + ":" + serverPort;
+        log.info("Authorization server URL: {}", issuer);
         return AuthorizationServerSettings.builder()
-            .issuer("http://auth-server:9999")
+            .issuer(issuer)
             .build();
     }
 }

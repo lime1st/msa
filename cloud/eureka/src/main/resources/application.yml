@@ -1,7 +1,5 @@
 server.port: 8761
 
-spring.application.name: eureka
-
 app:
   eureka-username: u
   eureka-password: p

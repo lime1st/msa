@@ -5,7 +5,7 @@
 #   HOST=localhost PORT=8000 ./test-em-all.bash
 #
 : ${HOST=localhost}
-: ${PORT=8080}
+: ${PORT=8443}
 : ${PROD_ID_REVS_RECS=1}
 : ${PROD_ID_NOT_FOUND=13}
 : ${PROD_ID_NO_RECS=113}
@@ -81,7 +81,7 @@ function waitForService() {
 function testCompositeCreated() {
 
     # Expect that the Product Composite for productId $PROD_ID_REVS_RECS has been created with three recommendations and three reviews
-    if ! assertCurl 200 "curl http://$HOST:$PORT/product-composite/$PROD_ID_REVS_RECS -s"
+    if ! assertCurl 200 "curl $AUTH -k https://$HOST:$PORT/product-composite/$PROD_ID_REVS_RECS -s"
     then
         echo -n "FAIL"
         return 1
@@ -184,7 +184,7 @@ fi
 
 waitForService curl -k https://$HOST:$PORT/actuator/health
 
-ACCESS_TOKEN=$(curl -k https://writer:secret@$HOST:$PORT/oauth2/token -d grant_type=client_credentials -s | jq .access_token -r)
+ACCESS_TOKEN=$(curl -k https://writer:writer@$HOST:$PORT/oauth2/token -d "grant_type=client_credentials&scope=product:write product:read" -s | jq .access_token -r)
 echo ACCESS_TOKEN=$ACCESS_TOKEN
 AUTH="-H \"Authorization: Bearer $ACCESS_TOKEN\""
 
@@ -230,7 +230,7 @@ assertEqual "\"Type mismatch.\"" "$(echo $RESPONSE | jq .message)"
 assertCurl 401 "curl -k https://$HOST:$PORT/product-composite/$PROD_ID_REVS_RECS -s"
 
 # Verify that the reader - client with only read scope can call the read API but not delete API.
-READER_ACCESS_TOKEN=$(curl -k https://reader:secret@$HOST:$PORT/oauth2/token -d grant_type=client_credentials -s | jq .access_token -r)
+READER_ACCESS_TOKEN=$(curl -k https://reader:reader@$HOST:$PORT/oauth2/token -d "grant_type=client_credentials&scope=product:read" -s | jq .access_token -r)
 echo READER_ACCESS_TOKEN=$READER_ACCESS_TOKEN
 READER_AUTH="-H \"Authorization: Bearer $READER_ACCESS_TOKEN\""
 
@@ -241,9 +241,9 @@ assertCurl 403 "curl -X DELETE $READER_AUTH -k https://$HOST:$PORT/product-compo
 echo "Swagger/OpenAPI tests"
 assertCurl 302 "curl -ks  https://$HOST:$PORT/openapi/swagger-ui.html"
 assertCurl 200 "curl -ksL https://$HOST:$PORT/openapi/swagger-ui.html"
-assertCurl 200 "curl -ks  https://$HOST:$PORT/openapi/webjars/swagger-ui/index.html?configUrl=/v3/api-docs/swagger-config"
+assertCurl 200 "curl -ks  https://$HOST:$PORT/openapi/swagger-ui/index.html?configUrl=/v3/api-docs/swagger-config"
 assertCurl 200 "curl -ks  https://$HOST:$PORT/openapi/v3/api-docs"
-assertEqual "3.0.1" "$(echo $RESPONSE | jq -r .openapi)"
+assertEqual "3.1.0" "$(echo $RESPONSE | jq -r .openapi)"
 assertEqual "https://$HOST:$PORT" "$(echo $RESPONSE | jq -r .servers[].url)"
 assertCurl 200 "curl -ks  https://$HOST:$PORT/openapi/v3/api-docs.yaml"
 

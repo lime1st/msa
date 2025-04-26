@@ -3,6 +3,17 @@ springdoc:
   api-docs.path: /openapi/v3/api-docs
   packagesToScan: msa.lime1st.composite.product
   pathsToMatch: /**
+  cache.disabled: true
+
+  swagger-ui:
+    oauth2-redirect-url: https://localhost:8443/webjars/swagger-ui/oauth2-redirect.html
+    oauth:
+      clientId: writer
+      clientSecret: writer
+      useBasicAuthenticationWithAccessCodeGrant: true
+  oAuthFlow:
+    authorizationUrl: https://localhost:8443/oauth2/authorize
+    tokenUrl: https://localhost:8443/oauth2/token
 
 server.forward-headers-strategy: framework
 
@@ -78,7 +89,8 @@ app:
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://${app.eureka-server}:8761/eureka/
+      defaultZone: "http://${app.eureka-username}:${app.eureka-password}@${app.eureka-server}:8761/eureka/"
+
 
 spring.cloud.stream:
   defaultBinder: rabbit

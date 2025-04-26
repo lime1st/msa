@@ -8,8 +8,13 @@ jar {
 	enabled = false
 }
 
+configurations {
+	implementation {
+		exclude group: 'org.springframework.boot', module: 'spring-boot-starter-webflux'
+	}
+}
+
 dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-authorization-server'
-
-
 }

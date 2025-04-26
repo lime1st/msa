@@ -5,12 +5,13 @@ import static org.springframework.security.config.Customizer.withDefaults;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
@@ -33,7 +34,6 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Order(1)
     SecurityFilterChain authorizationServerSecurityFilterChain(
         HttpSecurity http
     ) throws Exception {
@@ -41,11 +41,12 @@ public class SecurityConfig {
             OAuth2AuthorizationServerConfigurer.authorizationServer();
 
         http
+            .csrf(AbstractHttpConfigurer::disable)
             .securityMatcher(configurer.getEndpointsMatcher())
-            .with(configurer, authorizationServer ->
-                authorizationServer.oidc(withDefaults()))   // Enable OpenID Connect 1.0
             .authorizeHttpRequests(authorize ->
                 authorize.anyRequest().authenticated())
+            .with(configurer, authorizationServer ->
+                authorizationServer.oidc(withDefaults()))   // Enable OpenID Connect 1.0
             // Redirect to the login page when not authenticated from the
             // authorization endpoint
             .exceptionHandling(exceptions ->
@@ -58,10 +59,10 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Order(2)
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
         throws Exception {
         http
+            .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests((authorize) -> authorize
                 .requestMatchers("/actuator/**").permitAll()
                 .anyRequest().authenticated()
@@ -75,18 +76,7 @@ public class SecurityConfig {
 
     @Bean
     PasswordEncoder passwordEncoder() {
-        // NoOpPasswordEncoder 가 deprecate 되어 직접 구현
-        return new PasswordEncoder() {
-            @Override
-            public String encode(CharSequence rawPassword) {
-                return rawPassword.toString(); // 평문 그대로
-            }
-
-            @Override
-            public boolean matches(CharSequence rawPassword, String encodedPassword) {
-                return rawPassword.toString().equals(encodedPassword); // 평문 비교
-            }
-        };
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
     @Bean
