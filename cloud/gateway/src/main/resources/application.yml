@@ -41,12 +41,12 @@ spring.cloud.gateway.routes:
       - Path=/error/**
 
   - id: product-composite-swagger-ui
-    uri: lb://product-composite
+    uri: lb://composite
     predicates:
       - Path=/openapi/**
 
   - id: product-composite-swagger-ui-webjars
-    uri: lb://product-composite
+    uri: lb://composite
     predicates:
       - Path=/webjars/**
 
@@ -96,7 +96,8 @@ spring.security.oauth2.resourceserver.jwt.issuer-uri: http://${app.auth-server}:
 
 management.endpoint.health.show-details: "ALWAYS"
 management.endpoints.web.exposure.include: "*"
-management.endpoint.gateway.access: UNRESTRICTED
+# gateway 관련 actuator 엔드포인트 기본 RESTRICTED
+#management.endpoint.gateway.access: UNRESTRICTED
 
 logging:
   level:

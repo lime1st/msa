@@ -31,9 +31,9 @@ subprojects {
         implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
 
         // 공통 spring 의존성
-        implementation 'org.springframework.boot:spring-boot-starter-actuator'
         implementation 'org.springframework.boot:spring-boot-starter-webflux'
-
+        implementation 'org.springframework.boot:spring-boot-starter-actuator'
+        implementation 'org.springframework.boot:spring-boot-starter-security'
         implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
         // test
