@@ -3,7 +3,12 @@ package msa.lime1st.composite.product.presentation;
 import static reactor.core.publisher.Flux.empty;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import java.io.IOException;
+import java.net.URI;
 import java.util.logging.Level;
 import msa.lime1st.api.core.product.ProductApi;
 import msa.lime1st.api.core.product.ProductRequest;
@@ -18,11 +23,10 @@ import msa.lime1st.api.event.Event;
 import msa.lime1st.api.event.Event.Type;
 import msa.lime1st.util.exception.InvalidInputException;
 import msa.lime1st.util.exception.NotFoundException;
+import msa.lime1st.util.http.ApiUtil;
 import msa.lime1st.util.http.HttpErrorInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.actuate.health.Health;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -31,6 +35,7 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
@@ -48,18 +53,19 @@ public class ProductCompositeIntegration implements ProductApi, RecommendationAp
     private final WebClient webClient;
     private final ObjectMapper mapper;
     private final StreamBridge streamBridge;
+    private final ApiUtil apiUtil;
 
     public ProductCompositeIntegration(
         Scheduler publishEventScheduler,
-
         WebClient.Builder webClientBuilder,
         ObjectMapper mapper,
-        StreamBridge streamBridge
-    ) {
+        StreamBridge streamBridge,
+        ApiUtil apiUtil) {
         this.publishEventScheduler = publishEventScheduler;
         this.webClient = webClientBuilder.build();
         this.mapper = mapper;
         this.streamBridge = streamBridge;
+        this.apiUtil = apiUtil;
     }
 
     @Override
@@ -77,8 +83,19 @@ public class ProductCompositeIntegration implements ProductApi, RecommendationAp
     }
 
     @Override
-    public Mono<ProductResponse> getProduct(int productId) {
-        String url = PRODUCT_SERVICE_URL + "/product/" + productId;
+    @Retry(name = "product")
+    @TimeLimiter(name = "product")
+    @CircuitBreaker(name = "product", fallbackMethod = "getProductFallbackValue")
+    public Mono<ProductResponse> getProduct(
+        int productId,
+        int delay,
+        int faultPercent
+    ) {
+        URI url = UriComponentsBuilder.fromUriString(
+            PRODUCT_SERVICE_URL
+                + "/product/{productId}?delay={delay}"
+                + "&faultPercent={faultPercent}"
+        ).build(productId, delay, faultPercent);
         LOG.debug("Will call the getProduct API on URL: {}", url);
 
         return webClient.get().uri(url)
@@ -87,6 +104,33 @@ public class ProductCompositeIntegration implements ProductApi, RecommendationAp
             .log(LOG.getName(), Level.FINE)
             // onErrorMap 메서드를 활용해 HTTP 계층의 예외를 자체 예외로 변경
             .onErrorMap(WebClientResponseException.class, this::handleException);
+    }
+
+    // fallback 메서드는 폴백을 지정한 메서드와 시그니처가 같아야 하고 마지막에 서킷 브레이커가 트리거하는 예외를 전달하기 위한 매개변수를 추가해야 한다.
+    private Mono<ProductResponse> getProductFallbackValue(
+        int productId,
+        int delay,
+        int faultPercent,
+        CallNotPermittedException ex
+    ) {
+
+        LOG.warn("Creating a fail-fast fallback product for productId = {}, delay = {}, faultPercent = {} and exception = {} ",
+            productId, delay, faultPercent, ex.toString());
+
+        // 캐시에 값이 없는 경우를 시뮬레이션 하고자 특정 id 의 반환 값에 예외를 던진다.
+        if (productId == 13) {
+            String errMsg = "Product Id: " + productId + " not found in fallback cache!";
+            LOG.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        // fallback 로직은 보통 내부 캐시 등의 다른 곳에서 같은 id(productId) 를 이용해 조회하도록 구현한다.
+        // 여기서는 하드 코딩된 값을 반환한다.
+        return Mono.just(ProductResponse.of(
+            productId,
+            "Fallback product" + productId,
+            productId,
+            apiUtil.getServiceAddress()));
     }
 
     @Override

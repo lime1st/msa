@@ -1,5 +1,7 @@
 package msa.lime1st.composite;
 
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpStatus.OK;
@@ -8,9 +10,9 @@ import java.util.Collections;
 import msa.lime1st.api.core.product.ProductResponse;
 import msa.lime1st.api.core.recommendation.RecommendationResponse;
 import msa.lime1st.api.core.review.ReviewResponse;
+import msa.lime1st.composite.product.presentation.ProductCompositeIntegration;
 import msa.lime1st.util.exception.InvalidInputException;
 import msa.lime1st.util.exception.NotFoundException;
-import msa.lime1st.composite.product.presentation.ProductCompositeIntegration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +44,7 @@ class CompositeApplicationTests {
     @BeforeEach
     void setUp() {
 
-        when(compositeIntegration.getProduct(PRODUCT_ID_OK))
+        when(compositeIntegration.getProduct(eq(PRODUCT_ID_OK), anyInt(), anyInt()))
             .thenReturn(Mono.just(ProductResponse.of(
                 PRODUCT_ID_OK,
                 "name", 1,
@@ -61,10 +63,10 @@ class CompositeApplicationTests {
                 "mock address")
             )));
 
-        when(compositeIntegration.getProduct(PRODUCT_ID_NOT_FOUND))
+        when(compositeIntegration.getProduct(eq(PRODUCT_ID_NOT_FOUND), anyInt(), anyInt()))
             .thenThrow(new NotFoundException("NOT FOUND: " + PRODUCT_ID_NOT_FOUND));
 
-        when(compositeIntegration.getProduct(PRODUCT_ID_INVALID))
+        when(compositeIntegration.getProduct(eq(PRODUCT_ID_INVALID), anyInt(), anyInt()))
             .thenThrow(new InvalidInputException("INVALID: " + PRODUCT_ID_INVALID));
     }
 
