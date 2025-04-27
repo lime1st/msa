@@ -1,0 +1,32 @@
+server.port: 9999
+server.forward-headers-strategy: framework
+
+logging:
+  level:
+    root: INFO
+
+#spring:
+#  security:
+#    user:
+#      name: u
+#      password: p
+#    oauth2:
+#      authorizationserver:
+#        client:
+#          oidc-client:
+#            registration:
+#              client-id: "oidc-client"
+#              client-secret: "{noop}secret"
+#              client-authentication-methods:
+#                - "client_secret_basic"
+#              authorization-grant-types:
+#                - "authorization_code"
+#                - "refresh_token"
+#              redirect-uris:
+#                - "http://127.0.0.1:8080/login/oauth2/code/oidc-client"
+#              post-logout-redirect-uris:
+#                - "http://127.0.0.1:8080/"
+#              scopes:
+#                - "openid"
+#                - "profile"
+#            require-authorization-consent: true
