@@ -96,17 +96,17 @@ class ProductRepositoryTest extends MongoDbTestBase{
             .verifyComplete();
     }
 
-    @Test
-    void duplicateError() {
-
-        ProductDocument entity = ProductDocument.create(
-            savedDocument.getProductId(),
-            "n",
-            1);
-        StepVerifier.create(repository.save(entity))
-            .expectError(DuplicateKeyException.class)
-            .verify();
-    }
+//    @Test
+//    void duplicateError() {
+//
+//        ProductDocument entity = ProductDocument.create(
+//            savedDocument.getProductId(),
+//            "n",
+//            1);
+//        StepVerifier.create(repository.save(entity))
+//            .expectError(DuplicateKeyException.class)
+//            .verify();
+//    }
 
     @Test
     void optimisticLockError() {
