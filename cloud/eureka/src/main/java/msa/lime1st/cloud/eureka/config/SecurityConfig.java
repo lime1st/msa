@@ -18,17 +18,6 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 public class SecurityConfig {
 
-    private final String username;
-    private final String password;
-
-    public SecurityConfig(
-        @Value("${app.eureka-username}") String username,
-        @Value("${app.eureka-password}") String password
-    ) {
-        this.username = username;
-        this.password = password;
-    }
-
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable);
@@ -41,15 +30,15 @@ public class SecurityConfig {
 
     @Bean
     PasswordEncoder passwordEncoder() {
-       return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
     UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
         User.UserBuilder users = User.builder();
         UserDetails user = users
-            .username(username)
-            .password(passwordEncoder.encode(password))
+            .username("u")
+            .password(passwordEncoder.encode("p"))
             .roles("USER")
             .build();
 

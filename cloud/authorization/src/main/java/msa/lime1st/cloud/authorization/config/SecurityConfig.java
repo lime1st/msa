@@ -2,7 +2,6 @@ package msa.lime1st.cloud.authorization.config;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
@@ -21,17 +20,6 @@ import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 
 @Configuration
 public class SecurityConfig {
-
-    private final String username;
-    private final String password;
-
-    public SecurityConfig(
-        @Value("${app.eureka-username}") String username,
-        @Value("${app.eureka-password}") String password
-    ) {
-        this.username = username;
-        this.password = password;
-    }
 
     @Bean
     SecurityFilterChain authorizationServerSecurityFilterChain(
@@ -83,8 +71,8 @@ public class SecurityConfig {
     UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
         User.UserBuilder users = User.builder();
         UserDetails user = users
-            .username(username)
-            .password(passwordEncoder.encode(password))
+            .username("u")
+            .password(passwordEncoder.encode("p"))
             .roles("USER")
             .build();
 

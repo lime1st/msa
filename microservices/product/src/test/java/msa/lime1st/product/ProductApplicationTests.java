@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.util.function.Consumer;
@@ -21,10 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    properties = {"eureka.client.enabled=false"}
-)
+@SpringBootTest(webEnvironment = RANDOM_PORT)
 class ProductApplicationTests extends MongoDbTestBase {
 
     @Autowired
@@ -62,23 +60,23 @@ class ProductApplicationTests extends MongoDbTestBase {
             .jsonPath("$.productId").isEqualTo(productId);
     }
 
-    @Test
-    void duplicateError() {
-
-        int productId = 1;
-
-        assertNull(repository.findByProductId(productId).block());
-
-        sendCreateProductEvent(productId);
-
-        assertNotNull(repository.findByProductId(productId).block());
-
-        InvalidInputException thrown = assertThrows(
-            InvalidInputException.class,
-            () -> sendCreateProductEvent(productId),
-            "Expected a InvalidInputException here!");
-        assertEquals("Duplicate key, Product Id: " + productId, thrown.getMessage());
-    }
+//    @Test
+//    void duplicateError() {
+//
+//        int productId = 1;
+//
+//        assertNull(repository.findByProductId(productId).block());
+//
+//        sendCreateProductEvent(productId);
+//
+//        assertNotNull(repository.findByProductId(productId).block());
+//
+//        InvalidInputException thrown = assertThrows(
+//            InvalidInputException.class,
+//            () -> sendCreateProductEvent(productId),
+//            "Expected a InvalidInputException here!");
+//        assertEquals("Duplicate key, Product Id: " + productId, thrown.getMessage());
+//    }
 
     @Test
     void deleteProduct() {

@@ -188,9 +188,6 @@ ACCESS_TOKEN=$(curl -k https://writer:writer@$HOST:$PORT/oauth2/token -d "grant_
 echo ACCESS_TOKEN=$ACCESS_TOKEN
 AUTH="-H \"Authorization: Bearer $ACCESS_TOKEN\""
 
-USER_INFO=$(curl -H "Authorization: Bearer $ACCESS_TOKEN" https://$TENANT/userinfo -s | jq)
-echo "$USER_INFO"
-
 # Verify access to Eureka and that all four microservices are registered in Eureka
 assertCurl 200 "curl -H "accept:application/json" -k https://u:p@$HOST:$PORT/eureka/api/apps -s"
 assertEqual 6 $(echo $RESPONSE | jq ".applications.application | length")

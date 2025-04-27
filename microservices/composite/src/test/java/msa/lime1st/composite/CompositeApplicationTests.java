@@ -1,6 +1,7 @@
 package msa.lime1st.composite;
 
 import static org.mockito.Mockito.when;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.util.Collections;
@@ -22,12 +23,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+    webEnvironment = RANDOM_PORT,
     classes = {TestSecurityConfig.class},
-    properties = {
-        "spring.security.oauth2.resourceserver.jwt.issuer-uri=",
-        "spring.main.allow-bean-definition-overriding=true",
-        "eureka.client.enabled=false"})
+    properties = {"spring.main.allow-bean-definition-overriding=true"}
+)
 class CompositeApplicationTests {
 
     private static final int PRODUCT_ID_OK = 1;

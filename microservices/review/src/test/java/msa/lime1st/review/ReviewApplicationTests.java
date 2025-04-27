@@ -2,6 +2,7 @@ package msa.lime1st.review;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.util.function.Consumer;
 import msa.lime1st.api.core.review.ReviewRequest;
@@ -22,9 +23,12 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
 @SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    properties = {"eureka.client.enabled=false"}
-)
+    webEnvironment = RANDOM_PORT,
+    properties = {
+        "spring.cloud.stream.defaultBinder=rabbit",
+        "logging.level.msa.lime1st=DEBUG",
+        "spring.jpa.hibernate.ddl-auto=update"
+    })
 class ReviewApplicationTests extends MySqlTestBase {
 
     private static final Logger log = LoggerFactory.getLogger(ReviewApplicationTests.class);

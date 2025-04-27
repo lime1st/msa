@@ -5,7 +5,6 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
@@ -13,12 +12,6 @@ import org.springframework.http.ResponseEntity;
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class EurekaApplicationTests {
-
-    @Value("${app.eureka-username}")
-    private String username;
-
-    @Value("${app.eureka-password}")
-    private String password;
 
     private TestRestTemplate testRestTemplate;
 
@@ -28,7 +21,7 @@ class EurekaApplicationTests {
 
     @Autowired
     void setTestRestTemplate(TestRestTemplate testRestTemplate) {
-        this.testRestTemplate = testRestTemplate.withBasicAuth(username, password);
+        this.testRestTemplate = testRestTemplate.withBasicAuth("u", "p");
     }
 
     @Test

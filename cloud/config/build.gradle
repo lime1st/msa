@@ -11,6 +11,7 @@ jar {
 configurations {
     implementation {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-webflux'
+        exclude group: 'org.springframework.cloud', module: 'spring-cloud-starter-config'
         exclude group: 'org.springframework.cloud', module: 'spring-cloud-starter-netflix-eureka-client'
     }
 }

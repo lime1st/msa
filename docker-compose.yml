@@ -53,6 +53,8 @@ services:
     image: msa.lime1st.microservices/product:latest
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
+      - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
     depends_on:
       mongodb:
         condition: service_healthy
@@ -65,6 +67,8 @@ services:
     image: msa.lime1st.microservices/recommendation:latest
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
+      - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
     depends_on:
       mongodb:
         condition: service_healthy
@@ -77,6 +81,8 @@ services:
     image: msa.lime1st.microservices/review:latest
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
+      - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
     depends_on:
       mysql:
         condition: service_healthy
@@ -89,6 +95,8 @@ services:
     image: msa.lime1st.microservices/composite:latest
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
+      - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -97,6 +105,10 @@ services:
 
   eureka:
     image: msa.lime1st.cloud/eureka:latest
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
+      - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
     networks:
       - microservices-network
 
@@ -104,6 +116,8 @@ services:
     image: msa.lime1st.cloud/gateway:latest
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
+      - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
     networks:
       - microservices-network
     ports:
@@ -113,11 +127,24 @@ services:
     image: msa.lime1st.cloud/authorization:latest
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
+      - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://localhost:9999/actuator/health"]
       interval: 5s
       timeout: 2s
       retries: 60
+    networks:
+      - microservices-network
+
+  config:
+    image: msa.lime1st.cloud/config:latest
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker,native
+      - SPRING_SECURITY_USER_NAME=${CONFIG_SERVER_USR}
+      - SPRING_SECURITY_USER_PASSWORD=${CONFIG_SERVER_PWD}
+    volumes:
+      - $PWD/config-repo:/config-repo
     networks:
       - microservices-network
 
