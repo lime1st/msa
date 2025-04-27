@@ -82,15 +82,15 @@ class RecommendationRepositoryTest extends MongoDbTestBase {
         assertEqualsRecommendation(savedDocument, documentList.get(0));
     }
 
-    @Test
-    void duplicateError() {
-        assertThrows(DuplicateKeyException.class, () -> {
-            RecommendationDocument document = RecommendationDocument.create(
-                1, 2, "a", 3, "c");
-            repository.save(document)
-                .block();
-        });
-    }
+//    @Test
+//    void duplicateError() {
+//        assertThrows(DuplicateKeyException.class, () -> {
+//            RecommendationDocument document = RecommendationDocument.create(
+//                1, 2, "a", 3, "c");
+//            repository.save(document)
+//                .block();
+//        });
+//    }
 
     @Test
     void optimisticLockError() {

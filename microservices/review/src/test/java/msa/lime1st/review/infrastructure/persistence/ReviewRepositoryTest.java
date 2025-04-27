@@ -3,6 +3,7 @@ package msa.lime1st.review.infrastructure.persistence;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED;
 
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,8 +16,8 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-@DataJpaTest
-@Transactional(propagation = Propagation.NOT_SUPPORTED)
+@DataJpaTest(properties = {"spring.jpa.hibernate.ddl-auto=update"})
+@Transactional(propagation = NOT_SUPPORTED)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class ReviewRepositoryTest extends MySqlTestBase {
 

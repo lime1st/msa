@@ -3,6 +3,7 @@ package msa.lime1st.composite;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,14 +32,13 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
 @SpringBootTest(
-    webEnvironment = WebEnvironment.RANDOM_PORT,
+    webEnvironment = RANDOM_PORT,
     classes = {TestSecurityConfig.class},
     properties = {
         "spring.security.oauth2.resourceserver.jwt.issuer-uri=",
         "spring.main.allow-bean-definition-overriding=true",
-        "eureka.client.enabled=false"
-    }
-)
+        "spring.cloud.stream.defaultBinder=rabbit"
+    })
 @Import({TestChannelBinderConfiguration.class})
 public class MessagingTests {
 

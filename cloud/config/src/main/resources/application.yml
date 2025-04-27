@@ -1,0 +1,23 @@
+server.port: 8888
+
+spring.application.name: config
+
+spring.profiles.active: native
+spring.cloud.config.server.native.search-locations: file:${user.dir}/config-repo
+
+spring:
+  security:
+    user:
+      name: ${CONFIG_SERVER_USR:dev-usr}
+      password: ${CONFIG_SERVER_PWD:dev-pwd}
+
+management.endpoint.health.show-details: "ALWAYS"
+management.endpoints.web.exposure.include: "*"
+
+logging:
+  level:
+    root: info
+
+---
+spring.config.activate.on-profile: docker
+spring.cloud.config.server.native.search-locations: file:/config-repo

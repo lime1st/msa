@@ -1,0 +1,11 @@
+server.error.include-message: always
+
+spring.cloud.stream.defaultBinder: rabbit
+
+spring:
+  cloud:
+    config:
+      enabled: false
+eureka:
+  client:
+    enabled: false
