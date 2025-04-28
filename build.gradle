@@ -51,30 +51,4 @@ subprojects {
     test {
         useJUnitPlatform()
     }
-
-    // ✅ Spring Boot 플러그인이 적용된 모듈에서만 bootBuildImage 설정: 빌드팩 기반
-    afterEvaluate { project ->
-        if (project.plugins.hasPlugin("org.springframework.boot")) {
-            project.tasks.named("bootBuildImage") {
-                imageName = "${project.group}/${project.name}:latest"
-                environment = ["BP_JVM_VERSION": "17.*"]
-            }
-
-            project.tasks.named("bootJar") {
-                layered {
-                    enabled = true
-                }
-            }
-        }
-    }
-}
-
-// 컨테이너 이미지 빌드 동시 실행
-tasks.register("buildAllImages") {
-    group = "build"
-    description = "Build bootBuildImage for all Spring Boot subprojects"
-
-    dependsOn subprojects
-            .findAll { it.plugins.hasPlugin("org.springframework.boot") }
-            .collect { it.tasks.named("bootBuildImage") }
 }
