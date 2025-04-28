@@ -26,6 +26,7 @@ dependencies {
 
     // resilience4j
     implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
+    implementation 'io.github.resilience4j:resilience4j-reactor:2.2.0'  // 리액티브 지원 의존성 추가
     implementation 'org.springframework.boot:spring-boot-starter-aop'
 
     // netty
