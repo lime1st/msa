@@ -103,7 +103,7 @@ public class AuthorizationServerConfig {
     @Bean
     AuthorizationServerSettings authorizationServerSettings() {
         return AuthorizationServerSettings.builder()
-            .issuer("http://localhost:9999")
+            .issuer("http://authorization:9999")
             .build();
     }
 }

@@ -94,7 +94,7 @@ spring.cloud.stream:
       producer:
         required-groups: auditGroup
 
-spring.security.oauth2.resourceserver.jwt.issuer-uri: http://${app.auth-server}:9999
+spring.security.oauth2.resourceserver.jwt.issuer-uri: http://authorization:9999
 #spring.security.oauth2.resourceserver.jwt.issuer-uri: https://${TENANT}/
 
 resilience4j.timelimiter:
@@ -124,8 +124,8 @@ resilience4j.circuitbreaker:
       permittedNumberOfCallsInHalfOpenState: 3
       automaticTransitionFromOpenToHalfOpenEnabled: true
       ignoreExceptions:
-        - msa.lime1st.util.exceptions.InvalidInputException
-        - msa.lime1st.util.exceptions.NotFoundException
+        - msa.lime1st.util.exception.InvalidInputException
+        - msa.lime1st.util.exception.NotFoundException
 
 logging:
   level:

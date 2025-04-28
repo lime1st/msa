@@ -2,7 +2,6 @@ app:
   eureka-username: ${EUREKA_SERVER_USR:u}
   eureka-password: ${EUREKA_SERVER_PWD:p}
   eureka-server: localhost
-  auth-server: localhost
 
 eureka:
   client:
@@ -39,7 +38,6 @@ spring.cloud.stream.kafka.binder.brokers: kafka
 
 app:
   eureka-server: eureka
-  auth-server: authorization
 
 ---
 spring.config.activate.on-profile: kafka
