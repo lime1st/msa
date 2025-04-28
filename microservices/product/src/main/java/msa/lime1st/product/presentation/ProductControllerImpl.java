@@ -1,13 +1,17 @@
 package msa.lime1st.product.presentation;
 
+import java.time.Duration;
+import java.util.Random;
 import java.util.logging.Level;
 import msa.lime1st.api.core.product.ProductApi;
 import msa.lime1st.api.core.product.ProductRequest;
 import msa.lime1st.api.core.product.ProductResponse;
+import msa.lime1st.product.infrastructure.persistence.ProductDocument;
 import msa.lime1st.util.exception.InvalidInputException;
 import msa.lime1st.util.exception.NotFoundException;
 import msa.lime1st.product.infrastructure.persistence.ProductRepository;
 import msa.lime1st.util.http.ApiUtil;
+import org.apache.commons.lang.math.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
@@ -40,7 +44,7 @@ public class ProductControllerImpl implements ProductApi {
             throw new InvalidInputException("Invalid productId: " + request.productId());
         }
 
-        return repository.save( mapper.requestToDocument(request))
+        return repository.save(mapper.requestToDocument(request))
             .log(LOG.getName(), Level.FINE)
             .onErrorMap(
                 DuplicateKeyException.class,
@@ -50,7 +54,11 @@ public class ProductControllerImpl implements ProductApi {
     }
 
     @Override
-    public Mono<ProductResponse> getProduct(int productId) {
+    public Mono<ProductResponse> getProduct(
+        int productId,
+        int delay,
+        int faultPercent
+    ) {
         LOG.debug("/product return the found product for productId={}", productId);
 
         if (productId < 1) {
@@ -60,6 +68,8 @@ public class ProductControllerImpl implements ProductApi {
         LOG.info("Will get product info for id = {}", productId);
 
         return repository.findByProductId(productId)
+            .map(document -> throwErrorIfBadLuck(document, faultPercent))
+            .delayElement(Duration.ofSeconds(delay))    // 지연 적용
             .switchIfEmpty(Mono.error(new NotFoundException("No product found for productId: " + productId)))
             .log(LOG.getName(), Level.FINE)
             .map(mapper::documentToResponse)
@@ -79,5 +89,24 @@ public class ProductControllerImpl implements ProductApi {
             .log(LOG.getName(), Level.FINE)
             .map(repository::delete)
             .flatMap(e -> e);
+    }
+
+    // 랜덤 실패 발생기
+    private ProductDocument throwErrorIfBadLuck(ProductDocument document, int faultPercent) {
+
+        if (faultPercent == 0) {
+            return document;
+        }
+
+        int randomThreshold = RandomUtils.nextInt((100 - 1) + 1) + 1;
+
+        if (faultPercent < randomThreshold) {
+            LOG.debug("We got lucky, no error occurred, {} < {}", faultPercent, randomThreshold);
+        } else {
+            LOG.debug("Bad luck, an error occurred, {} >= {}", faultPercent, randomThreshold);
+            throw new RuntimeException("Something went wrong...");
+        }
+
+        return document;
     }
 }

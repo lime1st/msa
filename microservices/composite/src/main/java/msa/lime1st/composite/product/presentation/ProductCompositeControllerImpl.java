@@ -119,12 +119,20 @@ public class ProductCompositeControllerImpl implements ProductCompositeApi {
     }
 
     @Override
-    public Mono<ProductAggregateResponse> getProduct(int productId) {
+    public Mono<ProductAggregateResponse> getProduct(
+        int productId,
+        int delay,
+        int faultPercent
+    ) {
         LOG.info("Will get composite product info for product.id = {}", productId);
 
-        Mono<ProductResponse> productMono = integration.getProduct(productId);
-        Mono<List<RecommendationResponse>> recommendationsMono = integration.getRecommendations(
-            productId).collectList();
+        Mono<ProductResponse> productMono = integration.getProduct(
+            productId,
+            delay,
+            faultPercent
+        );
+        Mono<List<RecommendationResponse>> recommendationsMono = integration.getRecommendations(productId)
+            .collectList();
         Mono<List<ReviewResponse>> reviewsMono = integration.getReviews(productId).collectList();
 
         return Mono.zip(
