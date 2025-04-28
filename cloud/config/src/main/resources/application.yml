@@ -20,4 +20,7 @@ logging:
 
 ---
 spring.config.activate.on-profile: docker
-spring.cloud.config.server.native.search-locations: file:/config-repo
+
+spring.cloud.config.server:
+  native:
+    search-locations: file:/config-repo
