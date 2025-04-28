@@ -27,7 +27,7 @@ services:
       - MYSQL_USER=user
       - MYSQL_PASSWORD=password
     healthcheck:
-      test: [ "CMD", "mysql", "-uuser", "-ppassword", "-e", "SHOW DATABASES;" ]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uuser", "-ppassword"]
       interval: 5s
       timeout: 2s
       retries: 60
@@ -50,95 +50,127 @@ services:
       - microservices-network
 
   product:
-    image: msa.lime1st.microservices/product:latest
+    build: microservices/product
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
       - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
+      - CONFIG_SERVER_URI=http://config:8888
     depends_on:
       mongodb:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      eureka:
         condition: service_healthy
     networks:
       - microservices-network
 
   recommendation:
-    image: msa.lime1st.microservices/recommendation:latest
+    build: microservices/recommendation
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
       - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
+      - CONFIG_SERVER_URI=http://config:8888
     depends_on:
       mongodb:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      eureka:
+        condition: service_healthy
     networks:
       - microservices-network
 
   review:
-    image: msa.lime1st.microservices/review:latest
+    build: microservices/review
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
       - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
+      - CONFIG_SERVER_URI=http://config:8888
     depends_on:
       mysql:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      eureka:
+        condition: service_healthy
     networks:
       - microservices-network
 
   composite:
-    image: msa.lime1st.microservices/composite:latest
+    build: microservices/composite
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
       - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
+      - CONFIG_SERVER_URI=http://config:8888
     depends_on:
       rabbitmq:
+        condition: service_healthy
+      authorization:
+        condition: service_healthy
+      eureka:
         condition: service_healthy
     networks:
       - microservices-network
 
   eureka:
-    image: msa.lime1st.cloud/eureka:latest
+    build: cloud/eureka
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
       - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
+      - CONFIG_SERVER_URI=http://config:8888
+    depends_on:
+      config:
+        condition: service_healthy
     networks:
       - microservices-network
 
   gateway:
-    image: msa.lime1st.cloud/gateway:latest
+    build: cloud/gateway
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
       - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
+      - CONFIG_SERVER_URI=http://config:8888
+    depends_on:
+      config:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+      authorization:
+        condition: service_healthy
     networks:
       - microservices-network
     ports:
       - "8443:8443"
 
   authorization:
-    image: msa.lime1st.cloud/authorization:latest
+    build: cloud/authorization
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
       - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
+      - CONFIG_SERVER_URI=http://config:8888
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://localhost:9999/actuator/health"]
       interval: 5s
       timeout: 2s
       retries: 60
+    depends_on:
+      config:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
     networks:
       - microservices-network
 
   config:
-    image: msa.lime1st.cloud/config:latest
+    build: cloud/config
     environment:
       - SPRING_PROFILES_ACTIVE=docker,native
       - SPRING_SECURITY_USER_NAME=${CONFIG_SERVER_USR}
@@ -147,6 +179,11 @@ services:
       - $PWD/config-repo:/config-repo
     networks:
       - microservices-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8888/actuator/health" ]
+      interval: 5s
+      timeout: 2s
+      retries: 60
 
 # 네트워크 설정
 networks:
