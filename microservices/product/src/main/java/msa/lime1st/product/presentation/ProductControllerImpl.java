@@ -1,17 +1,16 @@
 package msa.lime1st.product.presentation;
 
 import java.time.Duration;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 import msa.lime1st.api.core.product.ProductApi;
 import msa.lime1st.api.core.product.ProductRequest;
 import msa.lime1st.api.core.product.ProductResponse;
 import msa.lime1st.product.infrastructure.persistence.ProductDocument;
+import msa.lime1st.product.infrastructure.persistence.ProductRepository;
 import msa.lime1st.util.exception.InvalidInputException;
 import msa.lime1st.util.exception.NotFoundException;
-import msa.lime1st.product.infrastructure.persistence.ProductRepository;
 import msa.lime1st.util.http.ApiUtil;
-import org.apache.commons.lang.math.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
@@ -98,7 +97,7 @@ public class ProductControllerImpl implements ProductApi {
             return document;
         }
 
-        int randomThreshold = RandomUtils.nextInt((100 - 1) + 1) + 1;
+        int randomThreshold = ThreadLocalRandom.current().nextInt((100 - 1) + 1) + 1;
 
         if (faultPercent < randomThreshold) {
             LOG.debug("We got lucky, no error occurred, {} < {}", faultPercent, randomThreshold);

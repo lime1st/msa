@@ -12,9 +12,7 @@ dependencies {
     implementation project(':api')
     implementation project(':util')
 
-    // messaging
-    implementation 'org.springframework.cloud:spring-cloud-starter-stream-rabbit'
-    implementation 'org.springframework.cloud:spring-cloud-starter-stream-kafka'
+    // for massaging
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2'
 
     // swagger

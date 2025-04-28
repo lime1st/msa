@@ -13,6 +13,10 @@ configurations {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-webflux'
         exclude group: 'org.springframework.cloud', module: 'spring-cloud-starter-config'
         exclude group: 'org.springframework.cloud', module: 'spring-cloud-starter-netflix-eureka-client'
+        exclude group: 'org.springframework.cloud', module: 'spring-cloud-starter-stream-rabbit'
+        exclude group: 'org.springframework.cloud', module: 'spring-cloud-starter-stream-kafka'
+        exclude group: 'io.micrometer', module: 'micrometer-tracing-bridge-brave'
+        exclude group: 'io.zipkin.reporter2', module: 'zipkin-reporter-brave'
     }
 }
 
