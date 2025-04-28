@@ -2,3 +2,8 @@ spring:
   cloud:
     config:
       enabled: false
+
+management:
+  health:
+    rabbit:
+      enabled: false
