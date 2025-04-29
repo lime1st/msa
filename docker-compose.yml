@@ -63,7 +63,10 @@ services:
       - microservices-network
 
   product:
-    build: microservices/product
+    build:
+      context: microservices/product
+      dockerfile: Dockerfile
+    image: msa/product:latest
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
@@ -80,7 +83,10 @@ services:
       - microservices-network
 
   recommendation:
-    build: microservices/recommendation
+    build:
+      context: microservices/recommendation
+      dockerfile: Dockerfile
+    image: msa/recommendation:latest
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
@@ -97,7 +103,10 @@ services:
       - microservices-network
 
   review:
-    build: microservices/review
+    build:
+      context: microservices/review
+      dockerfile: Dockerfile
+    image: msa/review:latest
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
@@ -114,7 +123,10 @@ services:
       - microservices-network
 
   composite:
-    build: microservices/composite
+    build:
+      context: microservices/composite
+      dockerfile: Dockerfile
+    image: msa/composite:latest
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
@@ -131,7 +143,10 @@ services:
       - microservices-network
 
   eureka:
-    build: cloud/eureka
+    build:
+      context: cloud/eureka
+      dockerfile: Dockerfile
+    image: msa/eureka:latest
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
@@ -144,7 +159,10 @@ services:
       - microservices-network
 
   gateway:
-    build: cloud/gateway
+    build:
+      context: cloud/gateway
+      dockerfile: Dockerfile
+    image: msa/gateway:latest
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
@@ -163,7 +181,10 @@ services:
       - "8443:8443"
 
   authorization:
-    build: cloud/authorization
+    build:
+      context: cloud/authorization
+      dockerfile: Dockerfile
+    image: msa/authorization:latest
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
@@ -183,7 +204,10 @@ services:
       - microservices-network
 
   config:
-    build: cloud/config
+    build:
+      context: cloud/config
+      dockerfile: Dockerfile
+    image: msa/config:latest
     environment:
       - SPRING_PROFILES_ACTIVE=docker,native
       - SPRING_SECURITY_USER_NAME=${CONFIG_SERVER_USR}
